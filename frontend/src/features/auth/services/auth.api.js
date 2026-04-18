@@ -32,3 +32,12 @@ export const getMe = async () => {
     }
 };
 
+export const logout = async () => {
+    try {
+        const response = await apiInstance.post("/logout");
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+

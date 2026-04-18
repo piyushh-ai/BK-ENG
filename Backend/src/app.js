@@ -3,6 +3,7 @@ import authRouter from "./routes/auth.route.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import router from "./routes/upload.route.js";
+import getStockRouter from "./routes/getStock.route.js";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/upload", router);
+app.use("/api/getStock", getStockRouter);
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
