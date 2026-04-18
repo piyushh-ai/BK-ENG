@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../hook/useAuth";
 import { gsap } from "gsap";
+import { useSelector } from "react-redux";
 
 const Login = () => {
   const { login } = useAuth();
@@ -11,6 +12,7 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate()
+  const user = useSelector((state) => state.auth.user);
 
   const cardRef = useRef(null);
   const badgeRef = useRef(null);
@@ -82,7 +84,11 @@ const Login = () => {
     setIsLoading(true);
     try {
       await login({ email, password });
-      navigate("/");
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       setError(err.message);
       gsap.to(cardRef.current, {

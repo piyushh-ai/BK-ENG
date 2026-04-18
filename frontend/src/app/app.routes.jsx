@@ -1,7 +1,8 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
 import Protected from "../features/auth/components/Protected";
+import AdminDashboard from "../features/admin/pages/AdminDashboard";
 
 export const appRouter = createBrowserRouter([
   {
@@ -12,7 +13,6 @@ export const appRouter = createBrowserRouter([
       </Protected>
     ),
   },
-
   {
     path: "/login",
     element: <Login />,
@@ -23,10 +23,15 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: (
-      <Protected role="admin">
-        <h1>admin page</h1>
-      </Protected>
-    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <Protected role="admin">
+            <AdminDashboard />
+          </Protected>
+        ),
+      },
+    ],
   },
 ]);

@@ -14,7 +14,7 @@ const Protected = ({ children, role }) => {
   }
 
   if(role && user.role !== role){
-    return <Navigate to="/" />
+    return <Navigate to="/" replace /> 
   }
 
   return children;

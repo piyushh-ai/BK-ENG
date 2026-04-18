@@ -32,7 +32,7 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email }).select("+password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -44,7 +44,10 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    generateToken(user._id, res, "User logged in successfully", user);
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    generateToken(user._id, res, "User logged in successfully", userResponse);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
@@ -53,7 +56,7 @@ export const login = async (req, res) => {
 
 export const getAdmin = async (req, res) => {
   try {
-    const user = await userModel.findById(req.user.id);
+    const user = await userModel.findById(req.user.id)
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -94,8 +97,8 @@ export const getAllUsers = async (req, res) => {
 
 export const updateRole = async (req, res) => {
   try {
-    const id = req.params.id;
-    const { role } = req.body;
+   
+    const { _id ,role } = req.body;
 
     const validRoles = ["sales", "admin"];
     if (!validRoles.includes(role)) {
@@ -104,7 +107,7 @@ export const updateRole = async (req, res) => {
       });
     }
 
-    const user = await userModel.findById(id);
+    const user = await userModel.findById(_id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

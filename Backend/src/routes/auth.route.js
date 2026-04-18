@@ -35,11 +35,11 @@ authRouter.get("/admin/me", adminAuth, getAdmin);
 authRouter.get("/user/me", isAuthenticated, getSales);
 
 /**
- * @route PUT /api/auth/update-role/:id
+ * @route PUT /api/auth/update-role
  * @desc Update user role
  * @access Private
  */
-authRouter.put("/update-role/:id", adminAuth, updateRole);
+authRouter.put("/update-role", adminAuth, updateRole);
 
 /**
  * @route GET /api/auth/all-users
