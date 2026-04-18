@@ -28,11 +28,11 @@ authRouter.post("/login", loginValidator, login);
 authRouter.get("/admin/me", adminAuth, getAdmin);
 
 /**
- * @route GET /api/auth/sales/me
+ * @route GET /api/auth/user/me
  * @desc Get current user
  * @access Private
  */
-authRouter.get("/sales/me", isAuthenticated, getSales);
+authRouter.get("/user/me", isAuthenticated, getSales);
 
 /**
  * @route PUT /api/auth/update-role/:id

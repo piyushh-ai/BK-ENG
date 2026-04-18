@@ -92,6 +92,13 @@ const Register = () => {
     setIsLoading(true);
     try {
       await register({ name, email, password });
+    } catch (err) {
+      setError(err.message);
+      gsap.to(cardRef.current, {
+        x: [-6, 6, -5, 5, -3, 3, 0],
+        duration: 0.4,
+        ease: "none",
+      });
     } finally {
       setIsLoading(false);
     }

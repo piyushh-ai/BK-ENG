@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../hook/useAuth";
 import { gsap } from "gsap";
 
@@ -8,6 +8,9 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate()
 
   const cardRef = useRef(null);
   const badgeRef = useRef(null);
@@ -19,14 +22,25 @@ const Login = () => {
   const footerRef = useRef(null);
 
   useEffect(() => {
-    const els = [badgeRef.current, headingRef.current, field1Ref.current, field2Ref.current, btnRef.current, footerRef.current];
+    const els = [
+      badgeRef.current,
+      headingRef.current,
+      field1Ref.current,
+      field2Ref.current,
+      btnRef.current,
+      footerRef.current,
+    ];
     gsap.set(els, { opacity: 0, y: 20 });
     gsap.set(accentRef.current, { scaleX: 0, transformOrigin: "left" });
 
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
     tl.to(cardRef.current, { opacity: 1, duration: 0 })
       .to(badgeRef.current, { opacity: 1, y: 0, duration: 0.45 })
-      .to(accentRef.current, { scaleX: 1, duration: 0.45, ease: "expo.out" }, "-=0.2")
+      .to(
+        accentRef.current,
+        { scaleX: 1, duration: 0.45, ease: "expo.out" },
+        "-=0.2",
+      )
       .to(headingRef.current, { opacity: 1, y: 0, duration: 0.4 }, "-=0.2")
       .to(field1Ref.current, { opacity: 1, y: 0, duration: 0.38 }, "-=0.22")
       .to(field2Ref.current, { opacity: 1, y: 0, duration: 0.38 }, "-=0.28")
@@ -38,19 +52,47 @@ const Login = () => {
     const rect = cardRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width - 0.5) * 6;
     const y = ((e.clientY - rect.top) / rect.height - 0.5) * 4;
-    gsap.to(cardRef.current, { rotateY: x, rotateX: -y, duration: 0.55, ease: "power2.out", transformPerspective: 900 });
+    gsap.to(cardRef.current, {
+      rotateY: x,
+      rotateX: -y,
+      duration: 0.55,
+      ease: "power2.out",
+      transformPerspective: 900,
+    });
   };
 
   const handleMouseLeave = () => {
-    gsap.to(cardRef.current, { rotateY: 0, rotateX: 0, duration: 0.8, ease: "elastic.out(1,0.5)" });
+    gsap.to(cardRef.current, {
+      rotateY: 0,
+      rotateX: 0,
+      duration: 0.8,
+      ease: "elastic.out(1,0.5)",
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    gsap.to(btnRef.current, { scale: 0.97, duration: 0.08, yoyo: true, repeat: 1 });
+    setError("");
+    gsap.to(btnRef.current, {
+      scale: 0.97,
+      duration: 0.08,
+      yoyo: true,
+      repeat: 1,
+    });
     setIsLoading(true);
-    try { await login({ email, password }); }
-    finally { setIsLoading(false); }
+    try {
+      await login({ email, password });
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+      gsap.to(cardRef.current, {
+        x: [-6, 6, -5, 5, -3, 3, 0],
+        duration: 0.4,
+        ease: "none",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -268,6 +310,19 @@ const Login = () => {
           box-shadow: 0 10px 28px rgba(0,37,66,0.22);
         }
         .lg-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .lg-error {
+          font-size: 12px;
+          color: var(--color-on-error-container, #ba1a1a);
+          background: var(--color-error-container, #ffdad6);
+          border: 1px solid var(--color-error, #ba1a1a);
+          border-radius: 8px;
+          padding: 10px 14px;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .lg-error-dot { width: 6px; height: 6px; background: var(--color-error, #ba1a1a); border-radius: 50%; flex-shrink: 0; }
         .lg-arrow-box {
           width: 20px;
           height: 20px;
@@ -322,11 +377,18 @@ const Login = () => {
         <nav className="lg-nav">
           <div className="lg-brand">
             <div className="lg-brand-icon">
-              <svg viewBox="0 0 14 14"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+              <svg viewBox="0 0 14 14">
+                <rect x="1" y="1" width="5" height="5" rx="1" />
+                <rect x="8" y="1" width="5" height="5" rx="1" />
+                <rect x="1" y="8" width="5" height="5" rx="1" />
+                <rect x="8" y="8" width="5" height="5" rx="1" />
+              </svg>
             </div>
             <span className="lg-brand-name">B.K Engineering</span>
           </div>
-          <Link to="/register" className="lg-nav-btn">Register →</Link>
+          <Link to="/register" className="lg-nav-btn">
+            Register →
+          </Link>
         </nav>
 
         <main className="lg-main">
@@ -349,12 +411,22 @@ const Login = () => {
 
               <div ref={headingRef}>
                 <h1 className="lg-title">Sign In</h1>
-                <p className="lg-sub">Welcome back. Enter your credentials to continue.</p>
+                <p className="lg-sub">
+                  Welcome back. Enter your credentials to continue.
+                </p>
               </div>
 
               <form onSubmit={handleSubmit}>
+                {error && (
+                  <div className="lg-error">
+                    <div className="lg-error-dot" />
+                    {error}
+                  </div>
+                )}
                 <div ref={field1Ref} className="field-group">
-                  <label className="field-label" htmlFor="lg-email">Email Address</label>
+                  <label className="field-label" htmlFor="lg-email">
+                    Email Address
+                  </label>
                   <input
                     className="field-input"
                     id="lg-email"
@@ -368,8 +440,12 @@ const Login = () => {
 
                 <div ref={field2Ref} className="field-group">
                   <div className="field-top">
-                    <label className="field-label" htmlFor="lg-pass">Password</label>
-                    <a href="#" className="field-forgot">Forgot?</a>
+                    <label className="field-label" htmlFor="lg-pass">
+                      Password
+                    </label>
+                    <a href="#" className="field-forgot">
+                      Forgot?
+                    </a>
                   </div>
                   <input
                     className="field-input"
@@ -383,7 +459,11 @@ const Login = () => {
                 </div>
 
                 <div ref={btnRef} style={{ opacity: 0 }}>
-                  <button className="lg-submit" type="submit" disabled={isLoading}>
+                  <button
+                    className="lg-submit"
+                    type="submit"
+                    disabled={isLoading}
+                  >
                     <span>{isLoading ? "Signing in..." : "Sign In"}</span>
                     {!isLoading && <div className="lg-arrow-box">→</div>}
                   </button>
@@ -396,14 +476,24 @@ const Login = () => {
                 </div>
                 <p className="lg-footer-text">
                   New to the firm?
-                  <Link to="/register" className="lg-footer-link">Register</Link>
+                  <Link to="/register" className="lg-footer-link">
+                    Register
+                  </Link>
                 </p>
               </div>
             </div>
 
             <div className="lg-meta">
-              <span className="lg-meta-text">REF: 2026-AUTH-SECURE<br />GATEWAY V1</span>
-              <span className="lg-meta-text" style={{ textAlign: "right" }}>AES-256-GCM<br />STATUS: ACTIVE</span>
+              <span className="lg-meta-text">
+                REF: 2026-AUTH-SECURE
+                <br />
+                GATEWAY V1
+              </span>
+              <span className="lg-meta-text" style={{ textAlign: "right" }}>
+                AES-256-GCM
+                <br />
+                STATUS: ACTIVE
+              </span>
             </div>
           </div>
         </main>
