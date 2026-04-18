@@ -392,7 +392,7 @@ const OverviewSection = ({
         <div className="sd-hero-eyebrow">B.K Engineering · Sales Portal</div>
         <h1 className="sd-hero-title">Sales Gateway</h1>
         <p className="sd-hero-sub">
-          Search instantly across Bosch and Company inventory — all in one
+          Search instantly across Bosch and Company inventory all in one
           place.
         </p>
 
