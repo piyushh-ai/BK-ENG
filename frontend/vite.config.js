@@ -8,7 +8,7 @@ export default defineConfig({
     host: true,
     proxy: {
       "/api": {
-        target: "https://bk-eng.onrender.com",
+        target: "http://bk-eng-alb-1130725411.ap-south-1.elb.amazonaws.com",
         changeOrigin: true,
         secure: false,
       },

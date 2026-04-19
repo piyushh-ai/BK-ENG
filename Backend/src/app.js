@@ -47,10 +47,6 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-app.get("/", (req, res) => {
-  res.status(200).send("BK-ENG Backend is running");
-});
-
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     return res.status(400).json({ message: "Invalid JSON payload" });
