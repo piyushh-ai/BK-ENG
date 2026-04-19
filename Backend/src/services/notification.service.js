@@ -5,17 +5,20 @@ export const sendNewOrderNotification = async (tokens, orderData) => {
   if (!tokens || tokens.length === 0 || !admin.apps.length) return;
 
   try {
+    const BASE_URL = "https://bk-eng.onrender.com";
+    const orderPath = `/admin/all_orders?orderId=${orderData._id}`;
+
     const message = {
       notification: {
         title: "🔥 New Order Punched!",
         body: `Order from ${orderData.partyName} has been created.`,
       },
       data: {
-        url: `/admin/all_orders?orderId=${orderData._id}`
+        url: orderPath
       },
       webpush: {
         fcmOptions: {
-          link: `/admin/all_orders?orderId=${orderData._id}`
+          link: `${BASE_URL}${orderPath}`
         }
       },
       tokens: tokens
