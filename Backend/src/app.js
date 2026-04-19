@@ -15,9 +15,17 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Required for ECS + ALB: trust the load balancer's forwarded headers
+app.set("trust proxy", 1);
+
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: "https://bk-eng.onrender.com", credentials: true }));
+app.use(
+  cors({
+    origin: "http://BK-ENG-ALB-1130725411.ap-south-1.elb.amazonaws.com" || "https://bk-eng.onrender.com",
+    credentials: true,
+  })
+);
 app.use(morgan("dev"));
 
 app.use("/api/auth", authRouter);
@@ -35,6 +43,14 @@ app.get("/version", (req, res) => {
   });
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
+app.get("/", (req, res) => {
+  res.status(200).send("BK-ENG Backend is running");
+});
+
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
     return res.status(400).json({ message: "Invalid JSON payload" });
@@ -45,11 +61,14 @@ app.use((err, req, res, next) => {
 const distPath = path.join(__dirname, "../dist");
 
 /**
- * frontend linking
+ * Serve frontend static files
  */
 app.use(express.static(distPath));
 
-app.get("/{*any}", (req, res) => {
+app.get("/{*path}", (req, res) => {
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({ message: "API route not found" });
+  }
   res.sendFile(path.join(distPath, "index.html"));
 });
 
