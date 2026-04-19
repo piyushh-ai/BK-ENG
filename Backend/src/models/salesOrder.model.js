@@ -30,6 +30,11 @@ const salesOrderSchema = new mongoose.Schema(
       enum: ["pending", "completed", "cancelled", "partial"],
       default: "pending",
     },
+    remark: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

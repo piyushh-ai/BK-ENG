@@ -154,6 +154,18 @@ const DetailModal = ({ isOpen, onClose, order, onImageClick }) => {
         </div>
 
         <div className="oh-d-body">
+          
+          {order.status !== "pending" && order.remark && (
+            <div className="oh-d-section">
+              <h4 className="oh-d-label" style={{ color: '#b45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>⚠️</span> Admin Remark
+              </h4>
+              <div className="oh-d-remark">
+                {order.remark}
+              </div>
+            </div>
+          )}
+
           <div className="oh-d-section">
             <h4 className="oh-d-label">Description</h4>
             <div className="oh-d-desc">{order.description || <span style={{opacity:0.5}}>No description provided.</span>}</div>
@@ -819,6 +831,18 @@ const OrderHistory = () => {
           padding: 16px;
           border-radius: 12px;
           border: 1px solid var(--color-outline-variant);
+          white-space: pre-wrap;
+        }
+        
+        .oh-d-remark {
+          font-size: 14px;
+          font-weight: 500;
+          line-height: 1.5;
+          color: #b45309;
+          background: #fffbeb;
+          padding: 14px 16px;
+          border-radius: 10px;
+          border-left: 4px solid #f59e0b;
           white-space: pre-wrap;
         }
         

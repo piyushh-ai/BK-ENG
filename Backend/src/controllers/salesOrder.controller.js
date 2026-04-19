@@ -4,7 +4,7 @@ import cloudinary from "../config/cloudinary.js";
 // ─────────────────────────────────────────────────────────────
 // Helper: build pagination metadata (DRY — used in all lists)
 // ─────────────────────────────────────────────────────────────
-const buildPagination = (total, page, limit) => ({
+export const buildPagination = (total, page, limit) => ({
   total,
   totalPages: Math.ceil(total / limit),
   currentPage: page,
@@ -18,7 +18,7 @@ const buildPagination = (total, page, limit) => ({
 //   • Pass req.files  (multer upload failure rollback)
 //   • Pass order.images (stored documents on order delete)
 // ─────────────────────────────────────────────────────────────
-const destroyCloudinaryImages = async (images = []) => {
+export const destroyCloudinaryImages = async (images = []) => {
   if (!images.length) return;
 
   const publicIds = images.map((img) =>
@@ -87,38 +87,7 @@ export const createOrder = async (req, res) => {
   }
 };
 
-// ═════════════════════════════════════════════════════════════
-// GET ALL ORDERS  (admin only)
-// GET /api/salesOrder/all
-// Access: Private (admin)
-// ═════════════════════════════════════════════════════════════
-export const getAllOrders = async (req, res) => {
-  try {
-    const page  = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit = Math.min(100, parseInt(req.query.limit) || 10); // cap at 100
-    const skip  = (page - 1) * limit;
 
-    const [orders, total] = await Promise.all([
-      salesOrderModel
-        .find()
-        .populate("user", "name email")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      salesOrderModel.countDocuments(),
-    ]);
-
-    return res.status(200).json({
-      message: "Orders fetched successfully",
-      orders,
-      pagination: buildPagination(total, page, limit),
-    });
-  } catch (error) {
-    console.error("Error in getAllOrders:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
 
 // ═════════════════════════════════════════════════════════════
 // GET MY ORDERS  (logged-in user's own orders)

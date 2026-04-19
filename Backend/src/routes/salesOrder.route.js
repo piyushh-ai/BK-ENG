@@ -3,7 +3,6 @@ import { isAuthenticated, adminAuth } from "../middleware/auth.middleware.js";
 import upload from "../middleware/upload.js";
 import {
   createOrder,
-  getAllOrders,
   getMyOrders,
   getOrderById,
   deleteOrder,
@@ -12,7 +11,7 @@ import {
 
 const router = Router();
 
-// ── Public-ish static routes first (before /:id dynamic routes) ──────────────
+
 
 /**
  * POST /api/salesOrder/create
@@ -21,12 +20,7 @@ const router = Router();
  */
 router.post("/create", isAuthenticated, upload.array("images", 7), createOrder);
 
-/**
- * GET /api/salesOrder/all
- * Get all orders with pagination (admin only)
- * Access: Admin
- */
-router.get("/all", adminAuth, getAllOrders);
+
 
 /**
  * GET /api/salesOrder/my

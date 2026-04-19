@@ -5,6 +5,7 @@ import cors from "cors";
 import router from "./routes/upload.route.js";
 import getStockRouter from "./routes/getStock.route.js";
 import salesOrderRouter from "./routes/salesOrder.route.js";
+import adminRouter from "./routes/admin.routes.js";
 import morgan from "morgan";
 
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/upload", router);
 app.use("/api/getStock", getStockRouter);
 app.use("/api/salesOrder", salesOrderRouter);
+app.use("/api/admin", adminRouter);
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
