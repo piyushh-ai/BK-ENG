@@ -77,7 +77,7 @@ export const createOrder = async (req, res) => {
       const tokens = admins.map((a) => a.fcmToken).filter(Boolean);
       if (tokens.length > 0) {
         // Run asynchronously so it doesn't block the request response
-        sendNewOrderNotification(tokens, order);
+        sendNewOrderNotification(tokens, order, req.user.name);
       }
     } catch (notifErr) {
       console.error("Error triggering notification:", notifErr);
