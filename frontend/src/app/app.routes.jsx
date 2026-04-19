@@ -45,6 +45,10 @@ export const appRouter = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Navigate to="/admin/system" replace />
+      },
+      {
+        path: ":tab",
         element: (
           <Protected role="admin">
             <AdminDashboard />

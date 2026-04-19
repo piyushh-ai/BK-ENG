@@ -36,3 +36,44 @@ export const updateRole = async (role) => {
         throw error;
     }
 };
+
+const adminApiInstance = axios.create({
+    baseURL: "/api/admin",
+    withCredentials: true,
+});
+
+export const getAllOrdersAdmin = async (page = 1, limit = 100) => {
+    try {
+        const response = await adminApiInstance.get(`/all?page=${page}&limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const updateOrderStatusAdmin = async (id, payload) => {
+    try {
+        const response = await adminApiInstance.put(`/orders/${id}/status`, payload);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const searchOrdersAdmin = async (query) => {
+    try {
+        const response = await adminApiInstance.get(`/search?q=${query}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const deleteOrderAdmin = async (id) => {
+    try {
+        const response = await adminApiInstance.delete(`/orders/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};

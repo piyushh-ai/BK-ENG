@@ -546,12 +546,12 @@ const OverviewSection = ({
 // ══════════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
 // ══════════════════════════════════════════════════════════════════════
-const SalesDashboard = () => {
+const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
   const { tab } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = tab || "overview";
+  const activeTab = adminTab || tab || "overview";
 
   // Company tab state
   const [sheets, setSheets] = useState([]);
@@ -667,7 +667,11 @@ const SalesDashboard = () => {
   }, [activeTab, selectedSheet, page, debouncedSearch]);
 
   const handleTabChange = (newTab) => {
-    navigate(`/sales/${newTab}`);
+    if (adminTab) {
+      navigate(`/admin/${newTab}`);
+    } else {
+      navigate(`/sales/${newTab}`);
+    }
     setSearchInput("");
     setPage(1);
   };
@@ -1098,8 +1102,8 @@ const SalesDashboard = () => {
         }
       `}</style>
 
-      <div className="sd-root">
-        <SalesNavbar activeTab={activeTab} onTabChange={handleTabChange} />
+      <div className="sd-root" style={hideNavbar ? { minHeight: "auto" } : {}}>
+        {!hideNavbar && <SalesNavbar activeTab={activeTab} onTabChange={handleTabChange} />}
 
         <div className="sd-content">
           {/* ── Page header (Hidden on Overview for a cleaner look) ── */}

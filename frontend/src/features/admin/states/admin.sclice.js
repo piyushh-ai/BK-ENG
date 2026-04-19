@@ -4,6 +4,7 @@ const adminSlice = createSlice({
   name: "admin",
   initialState: {
     allSalesUsers: null,
+    allOrders: [],
     loading: false,
     error: null,
     uploadStatus:null,
@@ -11,6 +12,9 @@ const adminSlice = createSlice({
   reducers: {
     setSalesUser: (state, action) => {
       state.allSalesUsers = action.payload;
+    },
+    setAllOrders: (state, action) => {
+      state.allOrders = action.payload;
     },
     setLoading: (state, action) => {
       state.loading = action.payload;
@@ -24,5 +28,5 @@ const adminSlice = createSlice({
   },
 });
 
-export const { setSalesUser, setLoading, setError,setUploadStatus } = adminSlice.actions;
+export const { setSalesUser, setAllOrders, setLoading, setError, setUploadStatus } = adminSlice.actions;
 export default adminSlice.reducer;
