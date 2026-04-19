@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { loginValidator, registerValidator } from "../validators/auth.validator.js";
-import { getAdmin, getAllUsers, getSales, login, register, updateRole } from "../controllers/auth.controller.js";
+import { getAdmin, getAllUsers, getSales, login, register, updateRole, updateFcmToken } from "../controllers/auth.controller.js";
 import { adminAuth, isAuthenticated } from "../middleware/auth.middleware.js";
 
-const authRouter = Router()
-
+const authRouter = Router();
 
 /**
  * @route POST /api/auth/register
@@ -48,4 +47,11 @@ authRouter.put("/update-role", adminAuth, updateRole);
  */
 authRouter.get("/all-users", adminAuth, getAllUsers);
 
-export default authRouter
+/**
+ * @route POST /api/auth/fcm-token
+ * @desc Update user FCM token
+ * @access Private
+ */
+authRouter.post("/fcm-token", isAuthenticated, updateFcmToken);
+
+export default authRouter;

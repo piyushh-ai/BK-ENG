@@ -1,5 +1,7 @@
 import salesOrderModel from "../models/salesOrder.model.js";
+import userModel from "../models/user.model.js";
 import cloudinary from "../config/cloudinary.js";
+import { sendNewOrderNotification } from "../services/notification.service.js";
 
 // ─────────────────────────────────────────────────────────────
 // Helper: build pagination metadata (DRY — used in all lists)
@@ -68,6 +70,18 @@ export const createOrder = async (req, res) => {
       user: req.user._id,
       // status defaults to "pending" via schema
     });
+
+    // ── Send Push Notification to Admins ──────────────────────
+    try {
+      const admins = await userModel.find({ role: "admin", fcmToken: { $ne: null } }).select("fcmToken");
+      const tokens = admins.map((a) => a.fcmToken).filter(Boolean);
+      if (tokens.length > 0) {
+        // Run asynchronously so it doesn't block the request response
+        sendNewOrderNotification(tokens, order);
+      }
+    } catch (notifErr) {
+      console.error("Error triggering notification:", notifErr);
+    }
 
     return res.status(201).json({
       message: "Sales order created successfully",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAdmin } from "../hooks/useAdmin";
+import { useFirebasePush } from "../hooks/useFirebasePush";
 import { useSelector } from "react-redux";
 import Navbar from "../components/Navbar";
 import { gsap } from "gsap";
@@ -135,6 +136,9 @@ const AdminDashboard = () => {
   const { tab } = useParams();
   const navigate = useNavigate();
   const activeTab = tab || "system";
+  
+  // Register device for FCM Push Notifications
+  useFirebasePush();
 
   return (
     <div className="min-h-screen font-sans flex flex-col relative" style={{ background: "var(--color-background)" }}>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import { gsap } from "gsap";
 
@@ -70,6 +71,8 @@ const AdminOrderList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [imgModalOpen, setImgModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const highlightOrderId = searchParams.get("orderId");
 
   const listRef = useRef(null);
 
@@ -88,8 +91,21 @@ const AdminOrderList = () => {
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, stagger: 0.1, duration: 0.5, ease: "power2.out" }
       );
+      
+      if (highlightOrderId) {
+        setTimeout(() => {
+          const el = document.getElementById(`order-${highlightOrderId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            gsap.fromTo(el, 
+              { scale: 1.05, boxShadow: "0 0 0 4px var(--color-primary)" }, 
+              { scale: 1, boxShadow: "0 0 0 0px var(--color-primary)", duration: 2, ease: "power2.out", delay: 0.5 }
+            );
+          }
+        }, 600);
+      }
     }
-  }, [allOrders]);
+  }, [allOrders, highlightOrderId]);
 
   // Group by salesman name
   const groupedOrders = useMemo(() => {
@@ -207,7 +223,7 @@ const AdminOrderList = () => {
                   const isLatest = index === 0 && !searchQuery;
 
                   return (
-                    <div key={order._id} className={`relative p-5 flex flex-col rounded-2xl border transition-all hover:shadow-lg ${isLatest ? 'bg-primary/5 border-primary/20' : 'bg-white'}`} style={{ borderColor: isLatest ? "" : "var(--color-outline-variant)" }}>
+                    <div id={`order-${order._id}`} key={order._id} className={`relative p-5 flex flex-col rounded-2xl border transition-all hover:shadow-lg ${isLatest ? 'bg-primary/5 border-primary/20' : 'bg-white'}`} style={{ borderColor: isLatest ? "" : "var(--color-outline-variant)" }}>
                       
                       {isLatest && (
                          <span className="absolute -top-3 right-4 px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-md">

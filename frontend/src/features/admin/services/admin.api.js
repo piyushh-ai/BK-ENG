@@ -77,3 +77,14 @@ export const deleteOrderAdmin = async (id) => {
         throw error;
     }
 };
+
+export const updateFCMToken = async (fcmToken) => {
+    try {
+        const response = await axios.post("/api/auth/fcm-token", { fcmToken }, {
+            withCredentials: true,
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};

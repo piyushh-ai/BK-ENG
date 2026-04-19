@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
     enum: ["sales", "admin"],
     default: "sales",
   },
+  fcmToken: {
+    type: String,
+    default: null,
+  },
 });
 
 userSchema.pre("save", async function () {
