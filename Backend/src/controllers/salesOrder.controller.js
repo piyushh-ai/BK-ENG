@@ -1,4 +1,4 @@
-import salesOrderModel from "../models/salesOrder.moel.js";
+import salesOrderModel from "../models/salesOrder.model.js";
 import cloudinary from "../config/cloudinary.js";
 
 // ─────────────────────────────────────────────────────────────
@@ -45,6 +45,11 @@ export const createOrder = async (req, res) => {
     if (!partyName?.trim()) {
       await destroyCloudinaryImages(req.files);
       return res.status(400).json({ message: "Party name is required" });
+    }
+
+    if (!description?.trim() && (!req.files || req.files.length === 0)) {
+      await destroyCloudinaryImages(req.files);
+      return res.status(400).json({ message: "Please provide either a description or an order image. Both cannot be empty." });
     }
 
     // ── Build images array from multer-cloudinary upload ──────
@@ -225,6 +230,41 @@ export const deleteOrder = async (req, res) => {
       return res.status(400).json({ message: "Invalid order ID" });
     }
     console.error("Error in deleteOrder:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════
+// SEARCH MY ORDERS by party name
+// GET /api/salesOrder/search?q=partyName
+// Access: Private (any authenticated user)
+// ═════════════════════════════════════════════════════════════
+export const searchMyOrders = async (req, res) => {
+  try {
+    const q = (req.query.q || "").trim();
+
+    if (!q) {
+      return res.status(400).json({ message: "Search query 'q' is required" });
+    }
+
+    const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(safeQ, "i");
+
+    const orders = await salesOrderModel
+      .find({
+        user: req.user._id,
+        partyName: { $regex: regex },
+      })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    return res.status(200).json({
+      message: "Search results",
+      orders,
+    });
+  } catch (error) {
+    console.error("Error in searchMyOrders:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

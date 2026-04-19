@@ -16,11 +16,31 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
   const tabRefs = useRef({});
 
   const tabs = [
-    { id: "overview", label: "Overview", icon: "🏠" },
-    { id: "company", label: "Company", icon: "🏢" },
-    { id: "bosch", label: "Bosch", icon: "⚙️" },
-    { id: "orders", label: "Orders", icon: "📦" },
-    { id: "history", label: "History", icon: "🕒" },
+    { 
+      id: "overview", 
+      label: "Dashboard", 
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{width: '20px', height: '20px'}}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 
+    },
+    { 
+      id: "company", 
+      label: "Co. Stock", 
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{width: '20px', height: '20px'}}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg> 
+    },
+    { 
+      id: "bosch", 
+      label: "Bosch", 
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{width: '20px', height: '20px'}}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> 
+    },
+    { 
+      id: "orders", 
+      label: "Punch", 
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{width: '20px', height: '20px'}}><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg> 
+    },
+    { 
+      id: "history", 
+      label: "History", 
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{width: '20px', height: '20px'}}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg> 
+    },
   ];
 
   // ── Desktop Nav entrance ─────────────────────────────────────────────
@@ -168,8 +188,11 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
           color: var(--color-primary); font-weight: 700;
           background: color-mix(in srgb, var(--color-primary) 10%, transparent);
         }
-        .snav-tab-icon { font-size: 15px; line-height: 1; transition: transform 0.3s ease; }
-        .snav-tab.active .snav-tab-icon { transform: scale(1.2); }
+        .snav-tab-icon { 
+          display: grid; place-items: center; 
+          transition: transform 0.3s ease; 
+        }
+        .snav-tab.active .snav-tab-icon { transform: scale(1.15); }
 
         /* Right section */
         .snav-right {
@@ -313,14 +336,15 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
           }
 
           .snav-bot-icon {
-            font-size: 22px;
-            line-height: 1;
+            display: grid; place-items: center;
+            color: var(--color-on-surface-variant);
             position: relative;
             z-index: 1;
-            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), color 0.25s ease;
           }
           .snav-bot-tab.active .snav-bot-icon {
-            transform: translateY(-2px) scale(1.12);
+            transform: translateY(-2px) scale(1.1);
+            color: var(--color-primary);
           }
 
           .snav-bot-dot {

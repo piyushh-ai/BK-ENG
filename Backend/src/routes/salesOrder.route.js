@@ -7,6 +7,7 @@ import {
   getMyOrders,
   getOrderById,
   deleteOrder,
+  searchMyOrders,
 } from "../controllers/salesOrder.controller.js";
 
 const router = Router();
@@ -34,7 +35,14 @@ router.get("/all", adminAuth, getAllOrders);
  */
 router.get("/my", isAuthenticated, getMyOrders);
 
-// ── Dynamic :id routes last — prevents /all and /my being caught as :id ──────
+/**
+ * GET /api/salesOrder/search?q=partyName
+ * Search user's own orders by party name
+ * Access: Private
+ */
+router.get("/search", isAuthenticated, searchMyOrders);
+
+// ── Dynamic :id routes last — prevents static routes being caught as :id ──────
 
 /**
  * GET /api/salesOrder/:id

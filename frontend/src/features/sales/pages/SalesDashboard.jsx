@@ -4,6 +4,8 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { gsap } from "gsap";
 import SalesNavbar from "../components/SalesNavbar";
 import ProductCard from "../components/ProductCard";
+import CreateOrder from "../components/CreateOrder";
+import OrderHistory from "../components/OrderHistory";
 import {
   getCompanySheets,
   getCompanyStock,
@@ -376,7 +378,7 @@ const OverviewSection = ({
       color: "#ba1a1a",
     },
     {
-      id: "orders",
+      id: "history",
       icon: "📦",
       label: "Pending Orders",
       value: "0",
@@ -1232,27 +1234,14 @@ const SalesDashboard = () => {
             </>
           )}
 
-          {/* ══ ORDERS TAB — placeholder ════════════════════════════ */}
+          {/* ══ ORDERS TAB ══════════════════════════════════════════ */}
           {activeTab === "orders" && (
-            <div className="sd-placeholder">
-              <div className="sd-placeholder-icon">📋</div>
-              <div className="sd-placeholder-title">Order Punching</div>
-              <div className="sd-placeholder-sub">
-                Order punching feature is coming soon.
-              </div>
-            </div>
+            <CreateOrder onSuccess={() => handleTabChange("history")} />
           )}
 
-          {/* ══ HISTORY TAB — placeholder ═══════════════════════════ */}
+          {/* ══ HISTORY TAB ══════════════════════════════════════════ */}
           {activeTab === "history" && (
-            <div className="sd-placeholder">
-              <div className="sd-placeholder-icon">🕒</div>
-              <div className="sd-placeholder-title">Order History</div>
-              <div className="sd-placeholder-sub">
-                Your past orders will appear here once the order system is
-                connected.
-              </div>
-            </div>
+            <OrderHistory />
           )}
         </div>
       </div>
