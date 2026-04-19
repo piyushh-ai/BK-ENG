@@ -1,9 +1,11 @@
+import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import Login from "../features/auth/pages/Login";
-import Register from "../features/auth/pages/Register";
-import Protected from "../features/auth/components/Protected";
-import AdminDashboard from "../features/admin/pages/AdminDashboard";
-import SalesDashboard from "../features/sales/pages/SalesDashboard";
+
+const Login = lazy(() => import("../features/auth/pages/Login"));
+const Register = lazy(() => import("../features/auth/pages/Register"));
+const Protected = lazy(() => import("../features/auth/components/Protected"));
+const AdminDashboard = lazy(() => import("../features/admin/pages/AdminDashboard"));
+const SalesDashboard = lazy(() => import("../features/sales/pages/SalesDashboard"));
 
 export const appRouter = createBrowserRouter([
   {

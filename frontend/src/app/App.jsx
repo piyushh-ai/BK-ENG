@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { appRouter } from "./app.routes";
 import { getMe } from "../features/auth/services/auth.api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../features/auth/state/auth.slice";
+import GlobalLoader from "./GlobalLoader";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -29,16 +30,14 @@ const App = () => {
   }, []);
 
   if (isCheckingAuth) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#f8f9fa]">
-        <div className="text-lg font-medium text-gray-600">Loading...</div>
-      </div>
-    );
+    return <GlobalLoader />;
   }
 
   return (
     <div>
-      <RouterProvider router={appRouter} />
+      <Suspense fallback={<GlobalLoader />}>
+        <RouterProvider router={appRouter} />
+      </Suspense>
     </div>
   );
 };

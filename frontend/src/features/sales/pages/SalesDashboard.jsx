@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { gsap } from "gsap";
@@ -24,7 +24,7 @@ function useDebounce(value, delay = 380) {
 }
 
 // ── Skeleton loader card ─────────────────────────────────────────────
-const SkeletonCard = () => (
+const SkeletonCard = React.memo(() => (
   <div
     style={{
       background: "var(--color-surface-container-lowest)",
@@ -90,10 +90,10 @@ const SkeletonCard = () => (
       />
     </div>
   </div>
-);
+));
 
 // ── Empty state ──────────────────────────────────────────────────────
-const EmptyState = ({ search }) => {
+const EmptyState = React.memo(({ search }) => {
   const ref = useRef(null);
   useEffect(() => {
     gsap.fromTo(
@@ -151,10 +151,10 @@ const EmptyState = ({ search }) => {
       </div>
     </div>
   );
-};
+});
 
 // ── Pagination ───────────────────────────────────────────────────────
-const Pagination = ({ pagination, onPageChange }) => {
+const Pagination = React.memo(({ pagination, onPageChange }) => {
   if (!pagination || pagination.totalPages <= 1) return null;
   const { currentPage, totalPages, totalDocuments, pageSize } = pagination;
   const from = (currentPage - 1) * pageSize + 1;
@@ -272,12 +272,12 @@ const Pagination = ({ pagination, onPageChange }) => {
       </div>
     </div>
   );
-};
+});
 
 // ══════════════════════════════════════════════════════════════════════
 // OVERVIEW SECTION (extracted for GSAP animations)
 // ══════════════════════════════════════════════════════════════════════
-const OverviewSection = ({
+const OverviewSection = React.memo(({
   sheets,
   sheetsLoading,
   masterQuery,
@@ -541,7 +541,7 @@ const OverviewSection = ({
       </div>
     </div>
   );
-};
+});
 
 // ══════════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
@@ -666,7 +666,7 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
     }
   }, [activeTab, selectedSheet, page, debouncedSearch]);
 
-  const handleTabChange = (newTab) => {
+  const handleTabChange = useCallback((newTab) => {
     if (adminTab) {
       navigate(`/admin/${newTab}`);
     } else {
@@ -674,14 +674,14 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
     }
     setSearchInput("");
     setPage(1);
-  };
+  }, [adminTab, navigate]);
 
-  const handleSheetSelect = (sheet) => {
+  const handleSheetSelect = useCallback((sheet) => {
     const name = typeof sheet === "string" ? sheet : sheet.sheetName;
     setSearchParams({ sheet: name });
     setSearchInput("");
     setPage(1);
-  };
+  }, [setSearchParams]);
 
   const isStockTab = activeTab === "company" || activeTab === "bosch";
 

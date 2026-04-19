@@ -14,7 +14,7 @@ const getLevel = (qty) => {
   return "good";
 };
 
-const ProductCard = ({ item }) => {
+const ProductCard = React.memo(({ item }) => {
   const cardRef    = useRef(null);
   const shimmerRef = useRef(null);
   const qtyRef     = useRef(null);
@@ -364,6 +364,6 @@ const ProductCard = ({ item }) => {
       </div>
     </>
   );
-};
+});
 
 export default ProductCard;
