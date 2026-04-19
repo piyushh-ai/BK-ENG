@@ -25,7 +25,7 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
         notification: {
           channelId: "orders-v2",
           // Show party name in bold using Android's inbox style title
-          title: `New Order — ${salesmanName}`,
+          title: `New Order by ${salesmanName}`,
           body: orderData.partyName.toUpperCase(),
           // Large image (big picture style) — shows order's first image
           ...(imageUrl && { imageUrl }),

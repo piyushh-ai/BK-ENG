@@ -20,8 +20,6 @@ app.use(cookieParser());
 app.use(cors({ origin: "https://bk-eng.onrender.com", credentials: true }));
 app.use(morgan("dev"));
 
-
-
 app.use("/api/auth", authRouter);
 app.use("/api/upload", router);
 app.use("/api/getStock", getStockRouter);
@@ -29,7 +27,12 @@ app.use("/api/salesOrder", salesOrderRouter);
 app.use("/api/admin", adminRouter);
 
 app.get("/version", (req, res) => {
-  res.json({ version: "2.0.2", updateUrl:"https://drive.google.com/file/d/1m2dMiizWBYThp9ku1k_ybMQLO3yKf5V1/view?usp=sharing", forceUpdate:true });
+  res.json({
+    version: "2.0.3",
+    updateUrl:
+      "https://drive.google.com/file/d/1m2dMiizWBYThp9ku1k_ybMQLO3yKf5V1/view?usp=sharing",
+    forceUpdate: true,
+  });
 });
 
 app.use((err, req, res, next) => {
