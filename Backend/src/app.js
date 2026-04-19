@@ -30,7 +30,7 @@ app.get("/version", (req, res) => {
   res.json({
     version: "2.0.3",
     updateUrl:
-      "https://drive.google.com/file/d/1m2dMiizWBYThp9ku1k_ybMQLO3yKf5V1/view?usp=sharing",
+      "https://drive.google.com/file/d/1aaOhI0ATH80_R8V8nfJLhCbyxVSFMBlZ/view?usp=sharing",
     forceUpdate: true,
   });
 });
