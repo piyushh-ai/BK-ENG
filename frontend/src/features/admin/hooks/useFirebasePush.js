@@ -11,9 +11,14 @@ export const useFirebasePush = () => {
   useEffect(() => {
     const requestPermissionAndGetToken = async () => {
       try {
-        if (VAPID_KEY === "YOUR_VAPID_KEY_HERE") {
+        if (VAPID_KEY === "BCR-DHYVMsPBNVxc4OwgAFTU-nSwqBg9uMI3gcHc-4YHxs7p7E0eP9bGRRaDt5oR85nvm7O8qKkVntdRg1eZRcI") {
              console.warn("⚠️ Firebase VAPID key is missing. Push notifications cannot be initialized.");
              return;
+        }
+
+        if (typeof window !== "undefined" && !("Notification" in window)) {
+          console.log("This browser does not support desktop notification");
+          return;
         }
 
         const permission = await Notification.requestPermission();
