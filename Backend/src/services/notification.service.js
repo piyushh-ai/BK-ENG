@@ -16,6 +16,12 @@ export const sendNewOrderNotification = async (tokens, orderData) => {
       data: {
         url: orderPath
       },
+      android: {
+        // Must match the channel created in useMobilePush.ts (orders-v2)
+        // MAX importance channel → heads-up banner on screen
+        channelId: "orders-v2",
+        priority: "high",
+      },
       webpush: {
         fcmOptions: {
           link: `${BASE_URL}${orderPath}`
