@@ -83,11 +83,11 @@ const Login = () => {
     });
     setIsLoading(true);
     try {
-      await login({ email, password });
-      if (user.role === "admin") {
+      const response = await login({ email, password });
+      if (response?.user?.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/");
+        navigate("/sales/overview");
       }
     } catch (err) {
       setError(err.message);

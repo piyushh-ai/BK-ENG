@@ -7,8 +7,12 @@ const buildSearchQuery = (search) => {
   const tokens = search.trim().split(/\s+/);
 
   const andConditions = tokens.map((token) => {
-    const safeToken = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = safeToken.split("").join("\\s*");
+    // escape each character individually, then join with \s* (optional whitespace only)
+    // dot stays as \. so "3.5L" ≠ "35L" — they are different
+    const regex = token
+      .split("")
+      .map((char) => char.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("\\s*"); // only allow optional whitespace between chars
 
     return {
       $or: [

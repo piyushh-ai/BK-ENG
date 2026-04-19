@@ -13,8 +13,12 @@ const Protected = ({ children, role }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if(role && user.role !== role){
-    return <Navigate to="/" replace /> 
+  if (role && user.role !== role) {
+    // Redirect to their correct dashboard, not "/" (which would loop!)
+    if (user.role === "admin") {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/sales/overview" replace />;
   }
 
   return children;
