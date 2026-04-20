@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { getToken, onMessage } from "firebase/messaging";
-import { messaging } from "../../../config/firebase";
+import { getFirebaseMessaging } from "../../../config/firebase";
 import { updateFCMToken } from "../services/admin.api";
 
 // Get this from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
@@ -10,8 +10,8 @@ export const useFirebasePush = () => {
   useEffect(() => {
     const requestPermissionAndGetToken = async () => {
       try {
-        // Guard: browser must support notifications
-        if (typeof window === "undefined" || !("Notification" in window)) {
+        // Guard: browser must support notifications and Service Workers
+        if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
           console.log("[Push] This browser does not support notifications.");
           return;
         }
@@ -23,6 +23,12 @@ export const useFirebasePush = () => {
         }
 
         console.log("[Push] Notification permission granted.");
+
+        const messaging = getFirebaseMessaging();
+        if (!messaging) {
+          console.warn("[Push] Firebase Messaging not supported in this environment.");
+          return;
+        }
 
         try {
           const token = await getToken(messaging, { vapidKey: VAPID_KEY });
@@ -45,6 +51,9 @@ export const useFirebasePush = () => {
 
     // Show a browser toast when a foreground message arrives
     // (Service Worker handles background messages automatically)
+    const messaging = getFirebaseMessaging();
+    if (!messaging) return;
+
     const unsubscribe = onMessage(messaging, (payload) => {
       console.log("[Push] Foreground message received:", payload);
       const { title, body } = payload.notification ?? {};

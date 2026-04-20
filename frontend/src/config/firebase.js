@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDeNcaws-0lR-A10i3ffnhJbtRvj3LngJQ",
@@ -9,4 +9,24 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const messaging = getMessaging(app);
+
+// Lazily initialize messaging only in a browser that supports Service Workers.
+// Calling getMessaging() at module scope crashes in SSR / unsupported browsers
+// because Firebase internally calls addEventListener on navigator.serviceWorker.
+let _messaging = null;
+export const getFirebaseMessaging = () => {
+  // navigator.serviceWorker can be present in the prototype but undefined
+  // in Android WebViews and other restricted environments — check the value, not just existence.
+  if (typeof window === "undefined" || !navigator.serviceWorker) {
+    return null;
+  }
+  if (!_messaging) {
+    try {
+      _messaging = getMessaging(app);
+    } catch (e) {
+      console.warn("[Firebase] getMessaging() failed:", e.message);
+      return null;
+    }
+  }
+  return _messaging;
+};
