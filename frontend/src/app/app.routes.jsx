@@ -3,6 +3,8 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 const Login = lazy(() => import("../features/auth/pages/Login"));
 const Register = lazy(() => import("../features/auth/pages/Register"));
+const ForgotPassword = lazy(() => import("../features/auth/pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("../features/auth/pages/ResetPassword"));
 const Protected = lazy(() => import("../features/auth/components/Protected"));
 const AdminDashboard = lazy(() => import("../features/admin/pages/AdminDashboard"));
 const SalesDashboard = lazy(() => import("../features/sales/pages/SalesDashboard"));
@@ -41,6 +43,14 @@ export const appRouter = createBrowserRouter([
   {
     path: "/register",
     element: <Register />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
   },
   {
     path: "/admin",

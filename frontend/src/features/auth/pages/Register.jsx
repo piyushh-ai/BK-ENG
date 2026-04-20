@@ -9,6 +9,7 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -335,6 +336,30 @@ const Register = () => {
           transition: all 0.2s;
         }
         .rg-input::placeholder { color: var(--color-outline); }
+        .rg-checkbox-wrap {
+          margin-top: -6px;
+          margin-bottom: 18px;
+          display: flex;
+        }
+        .rg-checkbox-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--color-on-surface-variant);
+          user-select: none;
+        }
+        .rg-checkbox-label:hover {
+          color: var(--color-on-surface);
+        }
+        .rg-checkbox {
+          width: 15px;
+          height: 15px;
+          cursor: pointer;
+          accent-color: var(--color-primary);
+        }
         .rg-input:focus {
           background: var(--color-surface-container-lowest);
           border-color: var(--color-primary);
@@ -496,7 +521,7 @@ const Register = () => {
             {/* Right card */}
             <div>
               <div ref={cardRef} className="rg-card">
-                <div ref={badgeRef} style={{ opacity: 0 }}>
+                <div ref={badgeRef}>
                   <div className="rg-badge">
                     <div className="rg-badge-dot" />
                     <span className="rg-badge-text">Initialize Account</span>
@@ -509,7 +534,7 @@ const Register = () => {
                   style={{ transform: "scaleX(0)" }}
                 />
 
-                <div ref={headingRef} style={{ opacity: 0 }}>
+                <div ref={headingRef}>
                   <h2 className="rg-title">Create Account</h2>
                   <p className="rg-sub">
                     Create your professional credentials to proceed.
@@ -562,7 +587,7 @@ const Register = () => {
                       <input
                         className="rg-input"
                         id="rg-pass"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -576,7 +601,7 @@ const Register = () => {
                       <input
                         className="rg-input"
                         id="rg-confirm"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -585,7 +610,19 @@ const Register = () => {
                     </div>
                   </div>
 
-                  <div ref={btnRef} style={{ opacity: 0 }}>
+                  <div className="rg-checkbox-wrap">
+                    <label className="rg-checkbox-label">
+                      <input 
+                        type="checkbox" 
+                        className="rg-checkbox"
+                        checked={showPassword}
+                        onChange={() => setShowPassword(!showPassword)}
+                      />
+                      <span>Show Password</span>
+                    </label>
+                  </div>
+
+                  <div ref={btnRef}>
                     <button
                       className="rg-submit"
                       type="submit"

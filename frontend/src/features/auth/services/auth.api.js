@@ -41,3 +41,21 @@ export const logout = async () => {
     }
 };
 
+export const forgetPassword = async (userData) => {
+    try {
+        const response = await apiInstance.post("/forget-password", userData);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const resetPassword = async (userData) => {
+    try {
+        const response = await apiInstance.post("/reset-password", userData);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+

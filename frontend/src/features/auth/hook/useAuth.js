@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { register as registerApi, login as loginApi, getMe as getMeApi, logout as logoutApi } from "../services/auth.api";
+import { register as registerApi, login as loginApi, getMe as getMeApi, logout as logoutApi, forgetPassword as forgetPasswordApi, resetPassword as resetPasswordApi } from "../services/auth.api";
 import { setUser, setLoading, setError, clearUser } from "../state/auth.slice";
 
 export const useAuth = () =>{
@@ -60,10 +60,40 @@ export const useAuth = () =>{
         }
     };
 
+    const forgetPassword = async (userData) => {
+        try {
+            dispatch(setLoading(true));
+            const response = await forgetPasswordApi(userData);
+            dispatch(setLoading(false));
+            return response;
+        } catch (error) {
+            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || error.message;
+            dispatch(setError(msg));
+            dispatch(setLoading(false));
+            throw new Error(msg);
+        }
+    };
+
+    const resetPassword = async (userData) => {
+        try {
+            dispatch(setLoading(true));
+            const response = await resetPasswordApi(userData);
+            dispatch(setLoading(false));
+            return response;
+        } catch (error) {
+            const msg = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || error.message;
+            dispatch(setError(msg));
+            dispatch(setLoading(false));
+            throw new Error(msg);
+        }
+    };
+
     return {
         register,
         login,
         getMe,
         logout,
+        forgetPassword,
+        resetPassword,
     };
 }

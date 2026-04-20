@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { loginValidator, registerValidator } from "../validators/auth.validator.js";
-import { getAdmin, getAllUsers, getSales, login, register, updateRole, updateFcmToken } from "../controllers/auth.controller.js";
+import { getAdmin, getAllUsers, getSales, login, register, updateRole, updateFcmToken, forgetPassword, resetPassword } from "../controllers/auth.controller.js";
 import { adminAuth, isAuthenticated } from "../middleware/auth.middleware.js";
 
 const authRouter = Router();
@@ -53,5 +53,19 @@ authRouter.get("/all-users", adminAuth, getAllUsers);
  * @access Private
  */
 authRouter.post("/fcm-token", isAuthenticated, updateFcmToken);
+
+/**
+ * @route POST /api/auth/forget-password
+ * @desc Forget password
+ * @access Public
+ */
+authRouter.post("/forget-password", forgetPassword);
+
+/**
+ * @route POST /api/auth/reset-password
+ * @desc Reset password with token
+ * @access Public
+ */
+authRouter.post("/reset-password", resetPassword);
 
 export default authRouter;

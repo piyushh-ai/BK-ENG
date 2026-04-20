@@ -1,26 +1,23 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hook/useAuth";
 import { gsap } from "gsap";
-import { useSelector } from "react-redux";
 
-const Login = () => {
-  const { login } = useAuth();
+const ForgotPassword = () => {
+  const { forgetPassword } = useAuth();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [resetToken, setResetToken] = useState("");
 
-  const navigate = useNavigate()
-  const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
 
   const cardRef = useRef(null);
   const badgeRef = useRef(null);
   const accentRef = useRef(null);
   const headingRef = useRef(null);
   const field1Ref = useRef(null);
-  const field2Ref = useRef(null);
   const btnRef = useRef(null);
   const footerRef = useRef(null);
 
@@ -29,7 +26,6 @@ const Login = () => {
       badgeRef.current,
       headingRef.current,
       field1Ref.current,
-      field2Ref.current,
       btnRef.current,
       footerRef.current,
     ];
@@ -46,36 +42,15 @@ const Login = () => {
       )
       .to(headingRef.current, { opacity: 1, y: 0, duration: 0.4 }, "-=0.2")
       .to(field1Ref.current, { opacity: 1, y: 0, duration: 0.38 }, "-=0.22")
-      .to(field2Ref.current, { opacity: 1, y: 0, duration: 0.38 }, "-=0.28")
       .to(btnRef.current, { opacity: 1, y: 0, duration: 0.38 }, "-=0.22")
       .to(footerRef.current, { opacity: 1, y: 0, duration: 0.32 }, "-=0.18");
   }, []);
 
-  const handleMouseMove = (e) => {
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 6;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 4;
-    gsap.to(cardRef.current, {
-      rotateY: x,
-      rotateX: -y,
-      duration: 0.55,
-      ease: "power2.out",
-      transformPerspective: 900,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    gsap.to(cardRef.current, {
-      rotateY: 0,
-      rotateX: 0,
-      duration: 0.8,
-      ease: "elastic.out(1,0.5)",
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
+    setResetToken("");
     gsap.to(btnRef.current, {
       scale: 0.97,
       duration: 0.08,
@@ -84,11 +59,10 @@ const Login = () => {
     });
     setIsLoading(true);
     try {
-      const response = await login({ email, password });
-      if (response?.user?.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/sales/overview");
+      const response = await forgetPassword({ email });
+      setSuccessMsg(response?.message || "Reset token sent.");
+      if (response?.resetToken) {
+        setResetToken(response.resetToken);
       }
     } catch (err) {
       setError(err.message);
@@ -120,10 +94,9 @@ const Login = () => {
           content: '';
           position: fixed;
           inset: 0;
-          background-image: linear-gradient(var(--color-outline-variant) 1px, transparent 1px),
-            linear-gradient(90deg, var(--color-outline-variant) 1px, transparent 1px);
+          background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
           background-size: 52px 52px;
-          opacity: 0.18;
           pointer-events: none;
         }
         .lg-nav {
@@ -174,7 +147,6 @@ const Login = () => {
           border: 1.5px solid var(--color-outline-variant);
           border-radius: 8px;
           transition: all 0.2s;
-          letter-spacing: 0.01em;
         }
         .lg-nav-btn:hover {
           color: var(--color-primary);
@@ -198,9 +170,8 @@ const Login = () => {
           background: var(--color-surface-container-lowest);
           border-radius: 20px;
           border: 1px solid var(--color-outline-variant);
-          box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 16px 40px rgba(0,37,66,0.1);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.08);
           padding: 44px 40px 36px;
-          will-change: transform;
         }
         .lg-badge {
           display: inline-flex;
@@ -234,44 +205,31 @@ const Login = () => {
         }
         .lg-title {
           font-family: 'Bricolage Grotesque', sans-serif;
-          font-size: 34px;
+          font-size: 30px;
           font-weight: 800;
           color: var(--color-on-surface);
-          letter-spacing: -1.2px;
-          line-height: 1.05;
+          letter-spacing: -1px;
+          line-height: 1.1;
           margin-bottom: 8px;
         }
         .lg-sub {
           font-size: 14px;
           color: var(--color-on-surface-variant);
           line-height: 1.5;
-          margin-bottom: 36px;
+          margin-bottom: 32px;
         }
         .field-group {
           margin-bottom: 18px;
         }
-        .field-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 7px;
-        }
         .field-label {
+          display: block;
           font-size: 10.5px;
           font-weight: 600;
           color: var(--color-outline);
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          margin-bottom: 7px;
         }
-        .field-forgot {
-          font-size: 10.5px;
-          font-weight: 600;
-          color: var(--color-primary);
-          text-decoration: none;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-        }
-        .field-forgot:hover { text-decoration: underline; }
         .field-input {
           width: 100%;
           padding: 12px 14px;
@@ -285,28 +243,6 @@ const Login = () => {
           transition: all 0.2s;
         }
         .field-input::placeholder { color: var(--color-outline); }
-        .field-input-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-        .field-input-wrapper .field-input {
-          padding-right: 40px;
-        }
-        .field-icon-btn {
-          position: absolute;
-          right: 12px;
-          background: none;
-          border: none;
-          color: var(--color-outline);
-          cursor: pointer;
-          display: grid;
-          place-items: center;
-          padding: 4px;
-        }
-        .field-icon-btn:hover {
-          color: var(--color-on-surface);
-        }
         .field-input:focus {
           background: var(--color-surface-container-lowest);
           border-color: var(--color-primary);
@@ -330,7 +266,6 @@ const Login = () => {
           justify-content: center;
           gap: 8px;
           transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-          will-change: transform;
         }
         .lg-submit:hover:not(:disabled) {
           background: var(--color-primary-container);
@@ -339,11 +274,12 @@ const Login = () => {
           box-shadow: 0 10px 28px rgba(0,37,66,0.22);
         }
         .lg-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
         .lg-error {
           font-size: 12px;
-          color: var(--color-on-error-container, #ba1a1a);
-          background: var(--color-error-container, #ffdad6);
-          border: 1px solid var(--color-error, #ba1a1a);
+          color: var(--color-on-error-container);
+          background: var(--color-error-container);
+          border: 1px solid var(--color-error);
           border-radius: 8px;
           padding: 10px 14px;
           margin-bottom: 16px;
@@ -351,7 +287,27 @@ const Login = () => {
           align-items: center;
           gap: 8px;
         }
-        .lg-error-dot { width: 6px; height: 6px; background: var(--color-error, #ba1a1a); border-radius: 50%; flex-shrink: 0; }
+        .lg-error-dot { width: 6px; height: 6px; background: var(--color-error); border-radius: 50%; flex-shrink: 0; }
+        
+        .lg-success {
+          font-size: 12px;
+          color: var(--color-on-primary-container);
+          background: var(--color-primary-container);
+          border: 1px solid var(--color-primary);
+          border-radius: 8px;
+          padding: 10px 14px;
+          margin-bottom: 16px;
+        }
+        .mock-token-box {
+          margin-top: 10px;
+          padding: 10px;
+          background: var(--color-surface-container-highest);
+          border-radius: 6px;
+          font-family: monospace;
+          word-break: break-all;
+          font-size: 11px;
+        }
+
         .lg-arrow-box {
           width: 20px;
           height: 20px;
@@ -395,16 +351,11 @@ const Login = () => {
           line-height: 1.7;
           font-family: 'DM Sans', sans-serif;
         }
-        @media (max-width: 480px) {
-          .lg-nav { padding: 14px 18px; }
-          .lg-card { padding: 32px 24px 28px; border-radius: 16px; }
-          .lg-title { font-size: 28px; }
-        }
       `}</style>
 
       <div className="lg-root">
         <nav className="lg-nav">
-          <div className="lg-brand">
+          <Link to="/" className="lg-brand">
             <div className="lg-brand-icon">
               <svg viewBox="0 0 14 14">
                 <rect x="1" y="1" width="5" height="5" rx="1" />
@@ -414,33 +365,28 @@ const Login = () => {
               </svg>
             </div>
             <span className="lg-brand-name">B.K Engineering</span>
-          </div>
-          <Link to="/register" className="lg-nav-btn">
-            Register →
+          </Link>
+          <Link to="/login" className="lg-nav-btn">
+            Sign In →
           </Link>
         </nav>
 
         <main className="lg-main">
           <div className="lg-wrap">
-            <div
-              ref={cardRef}
-              className="lg-card"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-            >
+            <div ref={cardRef} className="lg-card">
               <div ref={badgeRef}>
                 <div className="lg-badge">
                   <div className="lg-badge-dot" />
-                  <span className="lg-badge-text">Access Portal</span>
+                  <span className="lg-badge-text">Account Recovery</span>
                 </div>
               </div>
 
               <div ref={accentRef} className="lg-accent" />
 
               <div ref={headingRef}>
-                <h1 className="lg-title">Sign In</h1>
+                <h1 className="lg-title">Reset Password</h1>
                 <p className="lg-sub">
-                  Welcome back. Enter your credentials to continue.
+                  Enter your registered email address to receive a secure password reset link.
                 </p>
               </div>
 
@@ -451,6 +397,19 @@ const Login = () => {
                     {error}
                   </div>
                 )}
+                {successMsg && (
+                  <div className="lg-success">
+                    <strong>{successMsg}</strong>
+                    {resetToken && (
+                      <div className="mock-token-box">
+                        [DEV MODE] Token: <br/>{resetToken}
+                        <br/><br/>
+                        <Link to="/reset-password" style={{color: 'var(--color-primary)'}}>→ Proceed to Reset</Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 <div ref={field1Ref} className="field-group">
                   <label className="field-label" htmlFor="lg-email">
                     Email Address
@@ -466,46 +425,13 @@ const Login = () => {
                   />
                 </div>
 
-                <div ref={field2Ref} className="field-group">
-                  <div className="field-top">
-                    <label className="field-label" htmlFor="lg-pass">
-                      Password
-                    </label>
-                    <Link to="/forgot-password" className="field-forgot">
-                      Forgot?
-                    </Link>
-                  </div>
-                  <div className="field-input-wrapper">
-                    <input
-                      className="field-input"
-                      id="lg-pass"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="field-icon-btn"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                      ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
                 <div ref={btnRef}>
                   <button
                     className="lg-submit"
                     type="submit"
                     disabled={isLoading}
                   >
-                    <span>{isLoading ? "Signing in..." : "Sign In"}</span>
+                    <span>{isLoading ? "Sending..." : "Send Reset Link"}</span>
                     {!isLoading && <div className="lg-arrow-box">→</div>}
                   </button>
                 </div>
@@ -516,9 +442,9 @@ const Login = () => {
                   <div className="lg-divider-line" />
                 </div>
                 <p className="lg-footer-text">
-                  New to the firm?
-                  <Link to="/register" className="lg-footer-link">
-                    Register
+                  Remembered your password?
+                  <Link to="/login" className="lg-footer-link">
+                    Sign In
                   </Link>
                 </p>
               </div>
@@ -526,7 +452,7 @@ const Login = () => {
 
             <div className="lg-meta">
               <span className="lg-meta-text">
-                REF: 2026-AUTH-SECURE
+                REF: 2026-AUTH-RECOVERY
                 <br />
                 GATEWAY V1
               </span>
@@ -543,4 +469,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgotPassword;
