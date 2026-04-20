@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 
 const ResetPassword = () => {
   const { resetPassword } = useAuth();
-  const [token, setToken] = useState("");
+  const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -66,7 +66,7 @@ const ResetPassword = () => {
     });
     setIsLoading(true);
     try {
-      await resetPassword({ token, newPassword });
+      await resetPassword({ otp, newPassword });
       setSuccess(true);
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
@@ -257,16 +257,17 @@ const ResetPassword = () => {
                   
                   <div className="field-group">
                     <label className="field-label" htmlFor="lg-token">
-                      Reset Token
+                      6-Digit OTP
                     </label>
                     <input
                       className="field-input"
                       id="lg-token"
                       type="text"
-                      placeholder="Paste your reset token here"
-                      value={token}
-                      onChange={(e) => setToken(e.target.value)}
+                      placeholder="Enter the OTP received in email"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
                       required
+                      maxLength={6}
                     />
                   </div>
 

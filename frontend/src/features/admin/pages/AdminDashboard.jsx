@@ -120,6 +120,7 @@ const SystemSettings = () => {
                   </div>
                   <div className="w-14 h-14 rounded-full overflow-hidden border-2 shadow-sm border-gray-100"><img src={`https://api.dicebear.com/9.x/initials/svg?seed=${u.name}`} alt={u.name}/></div>
                 </div>
+
                 <div className="mt-6 pt-4 border-t pl-4 flex items-center justify-between border-gray-200">
                   <span className="text-xs font-medium uppercase tracking-wide text-gray-500">Access Level</span>
                   <button onClick={() => toggleRole(u)} className="text-sm font-bold px-4 py-2 rounded-lg transition-colors shadow-sm bg-gray-100 hover:bg-gray-200 text-gray-800">Set to {u.role === "admin" ? "Sales" : "Admin"}</button>

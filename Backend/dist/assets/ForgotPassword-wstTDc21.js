@@ -1,4 +1,4 @@
-import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o as i,r as a}from"./react-vendor-Cm1STAwb.js";import{t as o}from"./useAuth-BW70zOfJ.js";import{t as s}from"./gsap-vendor-TDMdzdWV.js";var c=e(t(),1),l=n(),u=()=>{let{login:e}=o(),[t,n]=(0,c.useState)(``),[u,d]=(0,c.useState)(``),[f,p]=(0,c.useState)(!1),[m,h]=(0,c.useState)(``),g=r();a(e=>e.auth.user);let _=(0,c.useRef)(null),v=(0,c.useRef)(null),y=(0,c.useRef)(null),b=(0,c.useRef)(null),x=(0,c.useRef)(null),S=(0,c.useRef)(null),C=(0,c.useRef)(null),w=(0,c.useRef)(null);return(0,c.useEffect)(()=>{let e=[v.current,b.current,x.current,S.current,C.current,w.current];s.set(e,{opacity:0,y:20}),s.set(y.current,{scaleX:0,transformOrigin:`left`}),s.timeline({defaults:{ease:`power3.out`}}).to(_.current,{opacity:1,duration:0}).to(v.current,{opacity:1,y:0,duration:.45}).to(y.current,{scaleX:1,duration:.45,ease:`expo.out`},`-=0.2`).to(b.current,{opacity:1,y:0,duration:.4},`-=0.2`).to(x.current,{opacity:1,y:0,duration:.38},`-=0.22`).to(S.current,{opacity:1,y:0,duration:.38},`-=0.28`).to(C.current,{opacity:1,y:0,duration:.38},`-=0.22`).to(w.current,{opacity:1,y:0,duration:.32},`-=0.18`)},[]),(0,l.jsxs)(l.Fragment,{children:[(0,l.jsx)(`style`,{children:`
+import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o as i}from"./react-vendor-Cm1STAwb.js";import{t as a}from"./useAuth-BNMMI8Jg.js";import{t as o}from"./gsap-vendor-TDMdzdWV.js";var s=e(t(),1),c=n(),l=()=>{let{forgetPassword:e}=a(),[t,n]=(0,s.useState)(``),[l,u]=(0,s.useState)(!1),[d,f]=(0,s.useState)(``),[p,m]=(0,s.useState)(``),[h,g]=(0,s.useState)(``);r();let _=(0,s.useRef)(null),v=(0,s.useRef)(null),y=(0,s.useRef)(null),b=(0,s.useRef)(null),x=(0,s.useRef)(null),S=(0,s.useRef)(null),C=(0,s.useRef)(null);return(0,s.useEffect)(()=>{let e=[v.current,b.current,x.current,S.current,C.current];o.set(e,{opacity:0,y:20}),o.set(y.current,{scaleX:0,transformOrigin:`left`}),o.timeline({defaults:{ease:`power3.out`}}).to(_.current,{opacity:1,duration:0}).to(v.current,{opacity:1,y:0,duration:.45}).to(y.current,{scaleX:1,duration:.45,ease:`expo.out`},`-=0.2`).to(b.current,{opacity:1,y:0,duration:.4},`-=0.2`).to(x.current,{opacity:1,y:0,duration:.38},`-=0.22`).to(S.current,{opacity:1,y:0,duration:.38},`-=0.22`).to(C.current,{opacity:1,y:0,duration:.32},`-=0.18`)},[]),(0,c.jsxs)(c.Fragment,{children:[(0,c.jsx)(`style`,{children:`
         @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@300;400;500&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,10 +14,9 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
           content: '';
           position: fixed;
           inset: 0;
-          background-image: linear-gradient(var(--color-outline-variant) 1px, transparent 1px),
-            linear-gradient(90deg, var(--color-outline-variant) 1px, transparent 1px);
+          background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
           background-size: 52px 52px;
-          opacity: 0.18;
           pointer-events: none;
         }
         .lg-nav {
@@ -68,7 +67,6 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
           border: 1.5px solid var(--color-outline-variant);
           border-radius: 8px;
           transition: all 0.2s;
-          letter-spacing: 0.01em;
         }
         .lg-nav-btn:hover {
           color: var(--color-primary);
@@ -92,9 +90,8 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
           background: var(--color-surface-container-lowest);
           border-radius: 20px;
           border: 1px solid var(--color-outline-variant);
-          box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 16px 40px rgba(0,37,66,0.1);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.08);
           padding: 44px 40px 36px;
-          will-change: transform;
         }
         .lg-badge {
           display: inline-flex;
@@ -128,44 +125,31 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
         }
         .lg-title {
           font-family: 'Bricolage Grotesque', sans-serif;
-          font-size: 34px;
+          font-size: 30px;
           font-weight: 800;
           color: var(--color-on-surface);
-          letter-spacing: -1.2px;
-          line-height: 1.05;
+          letter-spacing: -1px;
+          line-height: 1.1;
           margin-bottom: 8px;
         }
         .lg-sub {
           font-size: 14px;
           color: var(--color-on-surface-variant);
           line-height: 1.5;
-          margin-bottom: 36px;
+          margin-bottom: 32px;
         }
         .field-group {
           margin-bottom: 18px;
         }
-        .field-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 7px;
-        }
         .field-label {
+          display: block;
           font-size: 10.5px;
           font-weight: 600;
           color: var(--color-outline);
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          margin-bottom: 7px;
         }
-        .field-forgot {
-          font-size: 10.5px;
-          font-weight: 600;
-          color: var(--color-primary);
-          text-decoration: none;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-        }
-        .field-forgot:hover { text-decoration: underline; }
         .field-input {
           width: 100%;
           padding: 12px 14px;
@@ -202,7 +186,6 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
           justify-content: center;
           gap: 8px;
           transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-          will-change: transform;
         }
         .lg-submit:hover:not(:disabled) {
           background: var(--color-primary-container);
@@ -211,11 +194,12 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
           box-shadow: 0 10px 28px rgba(0,37,66,0.22);
         }
         .lg-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        
         .lg-error {
           font-size: 12px;
-          color: var(--color-on-error-container, #ba1a1a);
-          background: var(--color-error-container, #ffdad6);
-          border: 1px solid var(--color-error, #ba1a1a);
+          color: var(--color-on-error-container);
+          background: var(--color-error-container);
+          border: 1px solid var(--color-error);
           border-radius: 8px;
           padding: 10px 14px;
           margin-bottom: 16px;
@@ -223,7 +207,37 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
           align-items: center;
           gap: 8px;
         }
-        .lg-error-dot { width: 6px; height: 6px; background: var(--color-error, #ba1a1a); border-radius: 50%; flex-shrink: 0; }
+        .lg-error-dot { width: 6px; height: 6px; background: var(--color-error); border-radius: 50%; flex-shrink: 0; }
+        
+        .lg-success {
+          font-size: 13px;
+          color: #14532d;
+          background: #dcfce7;
+          border: 1px solid #22c55e;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 16px;
+          text-align: center;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+        .lg-btn-continue {
+          display: inline-block;
+          margin-top: 14px;
+          padding: 10px 24px;
+          background: var(--color-primary);
+          color: var(--color-on-primary);
+          border-radius: 8px;
+          font-weight: 700;
+          text-decoration: none;
+          font-size: 13px;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .lg-btn-continue:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,37,66,0.22);
+        }
+
         .lg-arrow-box {
           width: 20px;
           height: 20px;
@@ -267,9 +281,4 @@ import{r as e}from"./rolldown-runtime-Dw2cE7zH.js";import{h as t,i as n,l as r,o
           line-height: 1.7;
           font-family: 'DM Sans', sans-serif;
         }
-        @media (max-width: 480px) {
-          .lg-nav { padding: 14px 18px; }
-          .lg-card { padding: 32px 24px 28px; border-radius: 16px; }
-          .lg-title { font-size: 28px; }
-        }
-      `}),(0,l.jsxs)(`div`,{className:`lg-root`,children:[(0,l.jsxs)(`nav`,{className:`lg-nav`,children:[(0,l.jsxs)(`div`,{className:`lg-brand`,children:[(0,l.jsx)(`div`,{className:`lg-brand-icon`,children:(0,l.jsxs)(`svg`,{viewBox:`0 0 14 14`,children:[(0,l.jsx)(`rect`,{x:`1`,y:`1`,width:`5`,height:`5`,rx:`1`}),(0,l.jsx)(`rect`,{x:`8`,y:`1`,width:`5`,height:`5`,rx:`1`}),(0,l.jsx)(`rect`,{x:`1`,y:`8`,width:`5`,height:`5`,rx:`1`}),(0,l.jsx)(`rect`,{x:`8`,y:`8`,width:`5`,height:`5`,rx:`1`})]})}),(0,l.jsx)(`span`,{className:`lg-brand-name`,children:`B.K Engineering`})]}),(0,l.jsx)(i,{to:`/register`,className:`lg-nav-btn`,children:`Register →`})]}),(0,l.jsx)(`main`,{className:`lg-main`,children:(0,l.jsxs)(`div`,{className:`lg-wrap`,children:[(0,l.jsxs)(`div`,{ref:_,className:`lg-card`,style:{opacity:0},onMouseMove:e=>{let t=_.current.getBoundingClientRect(),n=((e.clientX-t.left)/t.width-.5)*6,r=((e.clientY-t.top)/t.height-.5)*4;s.to(_.current,{rotateY:n,rotateX:-r,duration:.55,ease:`power2.out`,transformPerspective:900})},onMouseLeave:()=>{s.to(_.current,{rotateY:0,rotateX:0,duration:.8,ease:`elastic.out(1,0.5)`})},children:[(0,l.jsx)(`div`,{ref:v,children:(0,l.jsxs)(`div`,{className:`lg-badge`,children:[(0,l.jsx)(`div`,{className:`lg-badge-dot`}),(0,l.jsx)(`span`,{className:`lg-badge-text`,children:`Access Portal`})]})}),(0,l.jsx)(`div`,{ref:y,className:`lg-accent`}),(0,l.jsxs)(`div`,{ref:b,children:[(0,l.jsx)(`h1`,{className:`lg-title`,children:`Sign In`}),(0,l.jsx)(`p`,{className:`lg-sub`,children:`Welcome back. Enter your credentials to continue.`})]}),(0,l.jsxs)(`form`,{onSubmit:async n=>{n.preventDefault(),h(``),s.to(C.current,{scale:.97,duration:.08,yoyo:!0,repeat:1}),p(!0);try{(await e({email:t,password:u}))?.user?.role===`admin`?g(`/admin`):g(`/sales/overview`)}catch(e){h(e.message),s.to(_.current,{x:[-6,6,-5,5,-3,3,0],duration:.4,ease:`none`})}finally{p(!1)}},children:[m&&(0,l.jsxs)(`div`,{className:`lg-error`,children:[(0,l.jsx)(`div`,{className:`lg-error-dot`}),m]}),(0,l.jsxs)(`div`,{ref:x,className:`field-group`,children:[(0,l.jsx)(`label`,{className:`field-label`,htmlFor:`lg-email`,children:`Email Address`}),(0,l.jsx)(`input`,{className:`field-input`,id:`lg-email`,type:`email`,placeholder:`you@company.com`,value:t,onChange:e=>n(e.target.value),required:!0})]}),(0,l.jsxs)(`div`,{ref:S,className:`field-group`,children:[(0,l.jsxs)(`div`,{className:`field-top`,children:[(0,l.jsx)(`label`,{className:`field-label`,htmlFor:`lg-pass`,children:`Password`}),(0,l.jsx)(`a`,{href:`#`,className:`field-forgot`,children:`Forgot?`})]}),(0,l.jsx)(`input`,{className:`field-input`,id:`lg-pass`,type:`password`,placeholder:`••••••••`,value:u,onChange:e=>d(e.target.value),required:!0})]}),(0,l.jsx)(`div`,{ref:C,style:{opacity:0},children:(0,l.jsxs)(`button`,{className:`lg-submit`,type:`submit`,disabled:f,children:[(0,l.jsx)(`span`,{children:f?`Signing in...`:`Sign In`}),!f&&(0,l.jsx)(`div`,{className:`lg-arrow-box`,children:`→`})]})})]}),(0,l.jsxs)(`div`,{ref:w,style:{opacity:0},children:[(0,l.jsx)(`div`,{className:`lg-divider`,children:(0,l.jsx)(`div`,{className:`lg-divider-line`})}),(0,l.jsxs)(`p`,{className:`lg-footer-text`,children:[`New to the firm?`,(0,l.jsx)(i,{to:`/register`,className:`lg-footer-link`,children:`Register`})]})]})]}),(0,l.jsxs)(`div`,{className:`lg-meta`,children:[(0,l.jsxs)(`span`,{className:`lg-meta-text`,children:[`REF: 2026-AUTH-SECURE`,(0,l.jsx)(`br`,{}),`GATEWAY V1`]}),(0,l.jsxs)(`span`,{className:`lg-meta-text`,style:{textAlign:`right`},children:[`AES-256-GCM`,(0,l.jsx)(`br`,{}),`STATUS: ACTIVE`]})]})]})})]})]})};export{u as default};
+      `}),(0,c.jsxs)(`div`,{className:`lg-root`,children:[(0,c.jsxs)(`nav`,{className:`lg-nav`,children:[(0,c.jsxs)(i,{to:`/`,className:`lg-brand`,children:[(0,c.jsx)(`div`,{className:`lg-brand-icon`,children:(0,c.jsxs)(`svg`,{viewBox:`0 0 14 14`,children:[(0,c.jsx)(`rect`,{x:`1`,y:`1`,width:`5`,height:`5`,rx:`1`}),(0,c.jsx)(`rect`,{x:`8`,y:`1`,width:`5`,height:`5`,rx:`1`}),(0,c.jsx)(`rect`,{x:`1`,y:`8`,width:`5`,height:`5`,rx:`1`}),(0,c.jsx)(`rect`,{x:`8`,y:`8`,width:`5`,height:`5`,rx:`1`})]})}),(0,c.jsx)(`span`,{className:`lg-brand-name`,children:`B.K Engineering`})]}),(0,c.jsx)(i,{to:`/login`,className:`lg-nav-btn`,children:`Sign In →`})]}),(0,c.jsx)(`main`,{className:`lg-main`,children:(0,c.jsxs)(`div`,{className:`lg-wrap`,children:[(0,c.jsxs)(`div`,{ref:_,className:`lg-card`,children:[(0,c.jsx)(`div`,{ref:v,children:(0,c.jsxs)(`div`,{className:`lg-badge`,children:[(0,c.jsx)(`div`,{className:`lg-badge-dot`}),(0,c.jsx)(`span`,{className:`lg-badge-text`,children:`Account Recovery`})]})}),(0,c.jsx)(`div`,{ref:y,className:`lg-accent`}),(0,c.jsxs)(`div`,{ref:b,children:[(0,c.jsx)(`h1`,{className:`lg-title`,children:`Reset Password`}),(0,c.jsx)(`p`,{className:`lg-sub`,children:`Enter your registered email address to receive a secure password reset link.`})]}),(0,c.jsxs)(`form`,{onSubmit:async n=>{n.preventDefault(),f(``),m(``),g(``),o.to(S.current,{scale:.97,duration:.08,yoyo:!0,repeat:1}),u(!0);try{m((await e({email:t}))?.message||`An OTP has been sent to your email.`)}catch(e){f(e.message),o.to(_.current,{x:[-6,6,-5,5,-3,3,0],duration:.4,ease:`none`})}finally{u(!1)}},children:[d&&(0,c.jsxs)(`div`,{className:`lg-error`,children:[(0,c.jsx)(`div`,{className:`lg-error-dot`}),d]}),p?(0,c.jsxs)(`div`,{className:`lg-success`,children:[p,(0,c.jsx)(`br`,{}),(0,c.jsx)(i,{to:`/reset-password`,className:`lg-btn-continue`,children:`Continue to Reset`})]}):(0,c.jsxs)(c.Fragment,{children:[(0,c.jsxs)(`div`,{ref:x,className:`field-group`,children:[(0,c.jsx)(`label`,{className:`field-label`,htmlFor:`lg-email`,children:`Email Address`}),(0,c.jsx)(`input`,{className:`field-input`,id:`lg-email`,type:`email`,placeholder:`you@company.com`,value:t,onChange:e=>n(e.target.value),required:!0})]}),(0,c.jsx)(`div`,{ref:S,children:(0,c.jsxs)(`button`,{className:`lg-submit`,type:`submit`,disabled:l,children:[(0,c.jsx)(`span`,{children:l?`Sending OTP...`:`Send OTP`}),!l&&(0,c.jsx)(`div`,{className:`lg-arrow-box`,children:`→`})]})})]})]}),(0,c.jsxs)(`div`,{ref:C,children:[(0,c.jsx)(`div`,{className:`lg-divider`,children:(0,c.jsx)(`div`,{className:`lg-divider-line`})}),(0,c.jsxs)(`p`,{className:`lg-footer-text`,children:[`Remembered your password?`,(0,c.jsx)(i,{to:`/login`,className:`lg-footer-link`,children:`Sign In`})]})]})]}),(0,c.jsxs)(`div`,{className:`lg-meta`,children:[(0,c.jsxs)(`span`,{className:`lg-meta-text`,children:[`REF: 2026-AUTH-RECOVERY`,(0,c.jsx)(`br`,{}),`GATEWAY V1`]}),(0,c.jsxs)(`span`,{className:`lg-meta-text`,style:{textAlign:`right`},children:[`AES-256-GCM`,(0,c.jsx)(`br`,{}),`STATUS: ACTIVE`]})]})]})})]})]})};export{l as default};

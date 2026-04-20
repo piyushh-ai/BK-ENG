@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  resetRequested: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 userSchema.pre("save", async function () {

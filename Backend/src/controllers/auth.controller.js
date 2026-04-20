@@ -1,11 +1,26 @@
 import { config } from "../config/config.js";
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtp-relay.brevo.com",
+  port: process.env.SMTP_PORT || 587,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 const generateToken = (id, res, message, user) => {
   const token = jwt.sign({ id }, config.jwt_secret, { expiresIn: "7d" });
 
-  res.cookie("token", token);
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
   res.status(201).json({ message: message, user });
 };
 
@@ -48,6 +63,19 @@ export const login = async (req, res) => {
     delete userResponse.password;
 
     generateToken(user._id, res, "User logged in successfully", userResponse);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    // Standard secure way to clear cookies across browsers
+    res.clearCookie("token", { httpOnly: true, secure: true, sameSite: "none" });
+    // Also send a fallback header clear just in case
+    res.setHeader("Clear-Site-Data", '"cookies"');
+    res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
@@ -154,13 +182,32 @@ export const forgetPassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const resetToken = jwt.sign({ id: user._id }, config.jwt_secret, { expiresIn: "15m" });
-    user.resetToken = resetToken;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetToken = otp;
     user.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
+    user.resetRequested = false;
     await user.save();
 
-    // WARNING: Returning token directly for frontend usage since no email service is configured
-    res.status(200).json({ message: "Reset token generated successfully", resetToken });
+    const mailOptions = {
+      from: '"B.K Engineering" <piyushairoliya122@gmail.com>',
+      to: email,
+      subject: "Password Reset OTP",
+      text: `Your OTP for password reset is: ${otp}. It is valid for 15 minutes.`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #004e89;">Password Reset</h2>
+          <p>You requested a password reset for your B.K Engineering account.</p>
+          <p>Your One-Time Password (OTP) is:</p>
+          <h1 style="background: #f0f4f8; padding: 10px 20px; display: inline-block; border-radius: 5px; letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP is valid for 15 minutes.</p>
+          <p>If you did not request this, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "An OTP has been sent to your email address." });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
@@ -169,25 +216,26 @@ export const forgetPassword = async (req, res) => {
 
 export const resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword) {
-      return res.status(400).json({ message: "Token and new password are required" });
+    const { otp, newPassword } = req.body;
+    if (!otp || !newPassword) {
+      return res.status(400).json({ message: "OTP and new password are required" });
     }
 
     // Verify token exists and has not expired
     const user = await userModel.findOne({
-      resetToken: token,
+      resetToken: otp,
       resetTokenExpiry: { $gt: Date.now() }
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired reset token" });
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
     // Update password (pre-save hook will hash it)
     user.password = newPassword;
     user.resetToken = null;
     user.resetTokenExpiry = null;
+    user.resetRequested = false;
     await user.save();
 
     res.status(200).json({ message: "Password reset successfully" });

@@ -60,10 +60,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       const response = await forgetPassword({ email });
-      setSuccessMsg(response?.message || "Reset token sent.");
-      if (response?.resetToken) {
-        setResetToken(response.resetToken);
-      }
+      setSuccessMsg(response?.message || "An OTP has been sent to your email.");
     } catch (err) {
       setError(err.message);
       gsap.to(cardRef.current, {
@@ -290,22 +287,32 @@ const ForgotPassword = () => {
         .lg-error-dot { width: 6px; height: 6px; background: var(--color-error); border-radius: 50%; flex-shrink: 0; }
         
         .lg-success {
-          font-size: 12px;
-          color: var(--color-on-primary-container);
-          background: var(--color-primary-container);
-          border: 1px solid var(--color-primary);
+          font-size: 13px;
+          color: #14532d;
+          background: #dcfce7;
+          border: 1px solid #22c55e;
           border-radius: 8px;
-          padding: 10px 14px;
+          padding: 16px;
           margin-bottom: 16px;
+          text-align: center;
+          font-weight: 500;
+          line-height: 1.5;
         }
-        .mock-token-box {
-          margin-top: 10px;
-          padding: 10px;
-          background: var(--color-surface-container-highest);
-          border-radius: 6px;
-          font-family: monospace;
-          word-break: break-all;
-          font-size: 11px;
+        .lg-btn-continue {
+          display: inline-block;
+          margin-top: 14px;
+          padding: 10px 24px;
+          background: var(--color-primary);
+          color: var(--color-on-primary);
+          border-radius: 8px;
+          font-weight: 700;
+          text-decoration: none;
+          font-size: 13px;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .lg-btn-continue:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,37,66,0.22);
         }
 
         .lg-arrow-box {
@@ -397,44 +404,41 @@ const ForgotPassword = () => {
                     {error}
                   </div>
                 )}
-                {successMsg && (
+                {successMsg ? (
                   <div className="lg-success">
-                    <strong>{successMsg}</strong>
-                    {resetToken && (
-                      <div className="mock-token-box">
-                        [DEV MODE] Token: <br/>{resetToken}
-                        <br/><br/>
-                        <Link to="/reset-password" style={{color: 'var(--color-primary)'}}>→ Proceed to Reset</Link>
-                      </div>
-                    )}
+                    {successMsg}
+                    <br/>
+                    <Link to="/reset-password" className="lg-btn-continue">Continue to Reset</Link>
                   </div>
-                )}
-                
-                <div ref={field1Ref} className="field-group">
-                  <label className="field-label" htmlFor="lg-email">
-                    Email Address
-                  </label>
-                  <input
-                    className="field-input"
-                    id="lg-email"
-                    type="email"
-                    placeholder="you@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                ) : (
+                  <>
+                    <div ref={field1Ref} className="field-group">
+                      <label className="field-label" htmlFor="lg-email">
+                        Email Address
+                      </label>
+                      <input
+                        className="field-input"
+                        id="lg-email"
+                        type="email"
+                        placeholder="you@company.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
 
-                <div ref={btnRef}>
-                  <button
-                    className="lg-submit"
-                    type="submit"
-                    disabled={isLoading}
-                  >
-                    <span>{isLoading ? "Sending..." : "Send Reset Link"}</span>
-                    {!isLoading && <div className="lg-arrow-box">→</div>}
-                  </button>
-                </div>
+                    <div ref={btnRef}>
+                      <button
+                        className="lg-submit"
+                        type="submit"
+                        disabled={isLoading}
+                      >
+                        <span>{isLoading ? "Sending OTP..." : "Send OTP"}</span>
+                        {!isLoading && <div className="lg-arrow-box">→</div>}
+                      </button>
+                    </div>
+                  </>
+                )}
               </form>
 
               <div ref={footerRef}>

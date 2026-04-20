@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { loginValidator, registerValidator } from "../validators/auth.validator.js";
-import { getAdmin, getAllUsers, getSales, login, register, updateRole, updateFcmToken, forgetPassword, resetPassword } from "../controllers/auth.controller.js";
+import { getAdmin, getAllUsers, getSales, login, logout, register, updateRole, updateFcmToken, forgetPassword, resetPassword } from "../controllers/auth.controller.js";
 import { adminAuth, isAuthenticated } from "../middleware/auth.middleware.js";
 
 const authRouter = Router();
@@ -18,6 +18,13 @@ authRouter.post("/register", registerValidator, register);
  * @access Public
  */
 authRouter.post("/login", loginValidator, login);
+
+/**
+ * @route POST /api/auth/logout
+ * @desc Logout user and clear cookies
+ * @access Public
+ */
+authRouter.post("/logout", logout);
 
 /**
  * @route GET /api/auth/admin/me
