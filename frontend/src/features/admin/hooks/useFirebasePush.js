@@ -4,14 +4,19 @@ import { getFirebaseMessaging } from "../../../config/firebase";
 import { updateFCMToken } from "../services/admin.api";
 
 // Get this from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
-const VAPID_KEY = "BCR-DHYVMsPBNVxc4OwgAFTU-nSwqBg9uMI3gcHc-4YHxs7p7E0eP9bGRRaDt5oR85nvm7O8qKkVntdRg1eZRcI";
+const VAPID_KEY =
+  "BCR-DHYVMsPBNVxc4OwgAFTU-nSwqBg9uMI3gcHc-4YHxs7p7E0eP9bGRRaDt5oR85nvm7O8qKkVntdRg1eZRcI";
 
 export const useFirebasePush = () => {
   useEffect(() => {
     const requestPermissionAndGetToken = async () => {
       try {
         // Guard: browser must support notifications and Service Workers
-        if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
+        if (
+          typeof window === "undefined" ||
+          !("Notification" in window) ||
+          !("serviceWorker" in navigator)
+        ) {
           console.log("[Push] This browser does not support notifications.");
           return;
         }
@@ -26,7 +31,9 @@ export const useFirebasePush = () => {
 
         const messaging = getFirebaseMessaging();
         if (!messaging) {
-          console.warn("[Push] Firebase Messaging not supported in this environment.");
+          console.warn(
+            "[Push] Firebase Messaging not supported in this environment.",
+          );
           return;
         }
 
@@ -37,7 +44,9 @@ export const useFirebasePush = () => {
             await updateFCMToken(token);
             console.log("[Push] Token synced successfully.");
           } else {
-            console.warn("[Push] No FCM registration token available — check VAPID key or Service Worker.");
+            console.warn(
+              "[Push] No FCM registration token available — check VAPID key or Service Worker.",
+            );
           }
         } catch (tokenErr) {
           console.error("[Push] getToken error:", tokenErr);
@@ -56,12 +65,19 @@ export const useFirebasePush = () => {
 
     const unsubscribe = onMessage(messaging, (payload) => {
       console.log("[Push] Foreground message received:", payload);
+
       const { title, body } = payload.notification ?? {};
+      const url = payload.data?.url;
+
       if (title && Notification.permission === "granted") {
-        new Notification(title, {
+        const notification = new Notification(title, {
           body: body ?? "",
           icon: "/icons.svg",
         });
+
+        notification.onclick = () => {
+          window.open(`http://13.205.77.25${url}`, "_blank");
+        };
       }
     });
 
