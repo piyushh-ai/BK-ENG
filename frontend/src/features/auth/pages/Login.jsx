@@ -85,6 +85,22 @@ const Login = () => {
     setIsLoading(true);
     try {
       const response = await login({ email, password });
+
+      // ── Persist session for React Native WebView ──────────────────────────
+      // Store token in localStorage (for Bearer fallback on next app boot).
+      if (response?.token) {
+        try {
+          window.localStorage.setItem('bk_auth_token', response.token);
+        } catch (_) {}
+      }
+      // Notify native shell → saves token to AsyncStorage for future app restarts.
+      if (typeof window !== 'undefined' && window.ReactNativeWebView && response?.token) {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: 'LOGIN', token: response.token })
+        );
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       if (response?.user?.role === "admin") {
         navigate("/admin");
       } else {

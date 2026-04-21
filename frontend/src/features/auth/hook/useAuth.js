@@ -56,6 +56,12 @@ export const useAuth = () =>{
         } catch (err) {
             // silently ignore logout API errors
         } finally {
+            // Clear stored session token from localStorage (WebView Bearer fallback)
+            try { window.localStorage.removeItem('bk_auth_token'); } catch (_) {}
+            // Notify React Native shell to clear AsyncStorage token
+            if (typeof window !== 'undefined' && window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'LOGOUT' }));
+            }
             dispatch(clearUser());
         }
     };

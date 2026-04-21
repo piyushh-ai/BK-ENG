@@ -21,7 +21,9 @@ const generateToken = (id, res, message, user) => {
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
-  res.status(201).json({ message: message, user });
+  // Also return token in body so React Native WebView can save it to AsyncStorage
+  // for session restoration after app is killed by the OS.
+  res.status(201).json({ message: message, user, token });
 };
 
 export const register = async (req, res) => {

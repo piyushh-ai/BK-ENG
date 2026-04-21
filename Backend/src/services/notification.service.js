@@ -7,7 +7,7 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
 
   try {
     const BASE_URL = "http://13.205.77.25";
-    const orderPath = `/admin/all_orders?orderId=${orderData._id}`;
+    const orderPath = `/admin/order/${orderData._id}`;
 
     // First image URL from order (if any)
     const imageUrl = orderData.images?.[0]?.url ?? null;
@@ -35,7 +35,7 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
           // Vibrate on arrival
           vibrateTimingsMillis: [0, 250, 250, 250],
           defaultVibrateTimings: false,
-          clickAction: "default",
+          clickAction: "expo.modules.notifications.actions.DEFAULT",
         },
       },
       webpush: {

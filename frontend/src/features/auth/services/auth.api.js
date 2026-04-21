@@ -5,6 +5,25 @@ const apiInstance = axios.create({
     withCredentials: true,
 });
 
+// ── Session restore for React Native WebView ────────────────────────────────
+// When the app is killed and restarted, the httpOnly cookie is gone.
+// The native app pre-loads the stored token into localStorage via
+// injectedJavaScriptBeforeContentLoaded. This interceptor picks it up and
+// sends it as a Bearer token so the backend can re-establish the session.
+apiInstance.interceptors.request.use((config) => {
+    try {
+        const token = typeof window !== 'undefined' && window.localStorage
+            ? window.localStorage.getItem('bk_auth_token')
+            : null;
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+    } catch (e) {
+        // localStorage might be unavailable in some environments
+    }
+    return config;
+});
+
 export const register = async (userData) => {
     try {
         const response = await apiInstance.post("/register", userData);
