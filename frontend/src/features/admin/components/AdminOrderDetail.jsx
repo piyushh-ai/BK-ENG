@@ -286,6 +286,13 @@ const AdminOrderDetail = () => {
   }, [order?._id]);
 
   useEffect(() => {
+    // If the user navigates directly to this route via a deep link, allOrders might be empty.
+    if (!allOrders || allOrders.length === 0) {
+      handleSearchOrders("");
+    }
+  }, []);
+
+  useEffect(() => {
     if (pageRef.current) {
       gsap.fromTo(
         pageRef.current,
