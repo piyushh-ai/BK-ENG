@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import AdminOrderDetail from "../features/admin/components/AdminOrderDetail";
 
 const Login = lazy(() => import("../features/auth/pages/Login"));
 const Register = lazy(() => import("../features/auth/pages/Register"));
@@ -67,6 +68,14 @@ export const appRouter = createBrowserRouter([
           </Protected>
         ),
       },
+      {
+        path: "/admin/order/:orderId",
+        element: (
+          <Protected role="admin">
+            <AdminOrderDetail  />
+          </Protected>
+        ),
+      }
     ],
   },
 ]);
