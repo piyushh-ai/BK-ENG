@@ -1,5 +1,13 @@
 
 import admin from "../config/firebase.js";
+import userModel from "../models/user.model.js";
+
+// FCM error codes that indicate the token is permanently invalid
+const INVALID_TOKEN_CODES = [
+  "messaging/registration-token-not-registered",
+  "messaging/invalid-registration-token",
+  "messaging/invalid-argument",
+];
 
 export const sendNewOrderNotification = async (tokens, orderData, salesmanName = "A Salesman") => {
   // If no tokens provided or Firebase is not initialized, abort silently
@@ -25,14 +33,10 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
         priority: "high",
         notification: {
           channelId: "orders-v2",
-          // Show party name in bold using Android's inbox style title
           title: `New Order by ${salesmanName}`,
           body: orderData.partyName.toUpperCase(),
-          // Large image (big picture style) — shows order's first image
           ...(imageUrl && { imageUrl }),
-          // Icon badge
           notificationCount: 1,
-          // Vibrate on arrival
           vibrateTimingsMillis: [0, 250, 250, 250],
           defaultVibrateTimings: false,
           clickAction: "expo.modules.notifications.actions.DEFAULT",
@@ -48,18 +52,37 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
 
     const response = await admin.messaging().sendEachForMulticast(message);
     console.log(`Notification sent: ${response.successCount} successes, ${response.failureCount} failures.`);
-    console.log(tokens);
-    
 
-    // Log exact error for every failed token
+    // Handle failed tokens — auto-cleanup stale/invalid tokens from DB
     if (response.failureCount > 0) {
+      const staleTokens = [];
+
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
+          const errorCode = resp.error?.code;
           console.error(`[FCM FAIL] Token[${idx}]: ${tokens[idx]}`);
-          console.error(`[FCM FAIL] Error code: ${resp.error?.code}`);
+          console.error(`[FCM FAIL] Error code: ${errorCode}`);
           console.error(`[FCM FAIL] Error message: ${resp.error?.message}`);
+
+          // Collect tokens that are permanently invalid
+          if (INVALID_TOKEN_CODES.includes(errorCode)) {
+            staleTokens.push(tokens[idx]);
+          }
         }
       });
+
+      // Remove stale tokens from the database
+      if (staleTokens.length > 0) {
+        try {
+          const result = await userModel.updateMany(
+            { fcmToken: { $in: staleTokens } },
+            { $set: { fcmToken: null } }
+          );
+          console.log(`[FCM] Cleared ${result.modifiedCount} stale token(s) from DB.`);
+        } catch (dbErr) {
+          console.error("[FCM] Failed to clear stale tokens from DB:", dbErr.message);
+        }
+      }
     }
   } catch (error) {
     console.error("Error sending notification:", error);
