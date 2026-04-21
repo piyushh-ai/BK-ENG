@@ -35,6 +35,7 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
           // Vibrate on arrival
           vibrateTimingsMillis: [0, 250, 250, 250],
           defaultVibrateTimings: false,
+          clickAction: "default",
         },
       },
       webpush: {

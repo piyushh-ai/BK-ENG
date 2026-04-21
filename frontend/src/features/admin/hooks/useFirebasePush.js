@@ -76,7 +76,8 @@ export const useFirebasePush = () => {
         });
 
         notification.onclick = () => {
-          window.open(`http://13.205.77.25${url}`, "_blank");
+          window.focus();
+          window.location.href = url;
         };
       }
     });

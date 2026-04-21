@@ -16,6 +16,31 @@ try {
   // handle clicking the notification and navigating to the right order!
   firebase.initializeApp(firebaseConfig);
   const messaging = firebase.messaging();
+
+  // Handle notification clicks in the background
+  self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    
+    // The URL is usually in data.url or data.FCM_MSG.data.url
+    const url = event.notification.data?.url || event.notification.data?.FCM_MSG?.data?.url;
+    
+    if (url) {
+      event.waitUntil(
+        clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+          // If a window is already open at this URL, focus it
+          for (const client of windowClients) {
+            if (client.url === url && "focus" in client) {
+              return client.focus();
+            }
+          }
+          // Otherwise open a new window
+          if (clients.openWindow) {
+            return clients.openWindow(url);
+          }
+        })
+      );
+    }
+  });
 } catch (error) {
   console.log("Firebase SW initialization error:", error.message);
 }
