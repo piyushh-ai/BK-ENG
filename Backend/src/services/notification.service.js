@@ -1,3 +1,4 @@
+import { log } from "console";
 import admin from "../config/firebase.js";
 
 export const sendNewOrderNotification = async (tokens, orderData, salesmanName = "A Salesman") => {
@@ -5,7 +6,7 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
   if (!tokens || tokens.length === 0 || !admin.apps.length) return;
 
   try {
-    const BASE_URL = "https://bk-eng.onrender.com";
+    const BASE_URL = "http://13.205.77.25";
     const orderPath = `/admin/all_orders?orderId=${orderData._id}`;
 
     // First image URL from order (if any)
@@ -46,6 +47,8 @@ export const sendNewOrderNotification = async (tokens, orderData, salesmanName =
 
     const response = await admin.messaging().sendEachForMulticast(message);
     console.log(`Notification sent: ${response.successCount} successes, ${response.failureCount} failures.`);
+    console.log(tokens);
+    
 
     // Log exact error for every failed token
     if (response.failureCount > 0) {
