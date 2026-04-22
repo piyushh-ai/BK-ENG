@@ -42,9 +42,9 @@ app.use("/api/admin", adminRouter);
 
 app.get("/version", (req, res) => {
   res.json({
-    version: "2.0.4",
+    version: "2.0.5",
     updateUrl:
-      "https://drive.google.com/file/d/1l6HQCg5U5j2GsTWbsCRnSK1S_Osca4oG/view?usp=sharing",
+      "https://drive.google.com/file/d/1jHjSH72GIlFhMxc7ZQkCKpdyrXYA0nxo/view?usp=drive_link",
     forceUpdate: true,
   });
 });

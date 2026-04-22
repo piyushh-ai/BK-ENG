@@ -5,6 +5,7 @@ import excelService from "../services/excel.service.js";
 import boschStockModel from "../models/boschStock.model.js";
 import companyStockModel from "../models/companyStock.model.js";
 import fs from "fs";
+import cache from "../lib/cache.js";
 
 export const uploadExcel = async (req, res) => {
   try {
@@ -26,6 +27,10 @@ export const uploadExcel = async (req, res) => {
       await excelService.importExcel(companyFile.path, companyStockModel);
       fs.unlinkSync(companyFile.path);
     }
+
+    // Invalidate all stock cache so users see fresh data immediately
+    cache.flushAll();
+    console.log("[Cache] Flushed all stock cache after Excel upload");
 
     res.json({ message: "Stock updated successfully ✅", user });
   } catch (err) {

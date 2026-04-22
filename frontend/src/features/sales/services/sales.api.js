@@ -1,9 +1,19 @@
-import axios from "axios";
+import Axios from "axios";
+import { setupCache } from "axios-cache-interceptor";
 
-const apiInstance = axios.create({
+// 2-minute in-memory cache for all GET stock requests
+const axiosInstance = Axios.create({
   baseURL: "/api",
   withCredentials: true,
 });
+
+const apiInstance = setupCache(axiosInstance, {
+  // TTL: 2 minutes (120 000 ms)
+  ttl: 2 * 60 * 1000,
+  // Don't cache anything that isn't a GET
+  methods: ["get"],
+});
+
 
 // ── Stock APIs ────────────────────────────────────────────────────────────────
 

@@ -1,13 +1,17 @@
+import Axios from "axios";
 import axios from "axios";
+import { setupCache } from "axios-cache-interceptor";
 
-const apiInstance = axios.create({
+const _uploadAxios = Axios.create({
     baseURL: "/api/upload",
     withCredentials: true,
 });
+const apiInstance = setupCache(_uploadAxios, { ttl: 2 * 60 * 1000, methods: ["get"] });
 
 export const uploadExcel = async (formData) => {
     try {
-        const response = await apiInstance.post("/upload-excel", formData);
+        // POST — never cached
+        const response = await _uploadAxios.post("/upload-excel", formData);
         return response.data;
     } catch (error) {
         throw error;
@@ -37,10 +41,12 @@ export const updateRole = async (role) => {
     }
 };
 
-const adminApiInstance = axios.create({
+const _adminAxios = Axios.create({
     baseURL: "/api/admin",
     withCredentials: true,
 });
+const adminApiInstance = setupCache(_adminAxios, { ttl: 2 * 60 * 1000, methods: ["get"] });
+
 
 export const getAllOrdersAdmin = async (page = 1, limit = 100) => {
     try {
