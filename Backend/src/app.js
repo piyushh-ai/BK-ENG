@@ -22,7 +22,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://BK-ENG-ALB-1130725411.ap-south-1.elb.amazonaws.com" || "https://bk-eng.onrender.com",
+    origin: [
+      "http://BK-ENG-ALB-1130725411.ap-south-1.elb.amazonaws.com",
+      "https://bk-eng.onrender.com",
+      "http://13.205.77.25",
+    ],
     credentials: true,
   })
 );
@@ -36,7 +40,7 @@ app.use("/api/admin", adminRouter);
 
 app.get("/version", (req, res) => {
   res.json({
-    version: "2.0.3",
+    version: "2.0.4",
     updateUrl:
       "https://drive.google.com/file/d/1aaOhI0ATH80_R8V8nfJLhCbyxVSFMBlZ/view?usp=sharing",
     forceUpdate: true,
