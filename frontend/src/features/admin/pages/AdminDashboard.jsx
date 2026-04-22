@@ -20,33 +20,20 @@ const SystemSettings = () => {
   const [boschFile, setBoschFile] = useState(null);
   const [companyFile, setCompanyFile] = useState(null);
 
-  const headerRef = useRef(null);
-  const uploadRef = useRef(null);
-  const usersRef = useRef(null);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     handleAllSalesUser();
   }, []);
 
   useEffect(() => {
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-    tl.fromTo(
-      headerRef.current,
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 0.6 },
-    )
-      .fromTo(
-        uploadRef.current,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.6 },
-        "-=0.4",
-      )
-      .fromTo(
-        usersRef.current,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.6 },
-        "-=0.4",
-      );
+    if (!contentRef.current) return;
+    const els = contentRef.current.querySelectorAll(".ad-anim");
+    gsap.fromTo(
+      els,
+      { opacity: 0, y: 28 },
+      { opacity: 1, y: 0, duration: 0.55, ease: "power3.out", stagger: 0.1, onComplete: () => gsap.set(els, { clearProps: "transform" }) }
+    );
   }, []);
 
   const onUpdateStock = async () => {
@@ -69,304 +56,385 @@ const SystemSettings = () => {
   };
 
   return (
-    <main className="w-full max-w-7xl mx-auto px-6 py-8 relative z-10 flex flex-col gap-12 pb-24">
-      {/* Header */}
-      <header ref={headerRef}>
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-4"
-          style={{
-            background: "var(--color-surface-container)",
-            borderColor: "var(--color-outline-variant)",
-          }}
-        >
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{ background: "var(--color-primary)" }}
-          />
-          <span
-            className="text-xs font-bold uppercase tracking-widest"
-            style={{ color: "var(--color-on-surface-variant)" }}
-          >
-            Admin Portal
-          </span>
-        </div>
-        <h1
-          className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3 transition-colors"
-          style={{
-            color: "var(--color-on-surface)",
-            fontFamily: "'Bricolage Grotesque', sans-serif",
-          }}
-        >
-          System Dashboard
-        </h1>
-        <p
-          className="text-lg"
-          style={{ color: "var(--color-on-surface-variant)" }}
-        >
-          Manage inventory files and system personnel.
-        </p>
-      </header>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600&display=swap');
 
-      {/* Upload Section */}
-      <section
-        ref={uploadRef}
-        className="p-8 md:p-10 rounded-3xl border shadow-sm"
-        style={{
-          background: "var(--color-surface-container-lowest)",
-          borderColor: "var(--color-outline-variant)",
-        }}
-      >
-        <h2
-          className="text-2xl font-bold mb-8"
-          style={{
-            color: "var(--color-on-surface)",
-            fontFamily: "'Bricolage Grotesque', sans-serif",
-          }}
-        >
-          Update Stock Data
-        </h2>
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
-          {/* Bosch Upload */}
-          <div className="relative group">
-            <label
-              className="block text-sm font-bold mb-3 uppercase tracking-wide"
-              style={{ color: "var(--color-outline)" }}
-            >
-              Bosch Stock File
-            </label>
-            <div
-              className="relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl transition-all duration-300"
-              style={{
-                borderColor: boschFile
-                  ? "var(--color-primary)"
-                  : "var(--color-outline-variant)",
-                background: boschFile
-                  ? "var(--color-primary-fixed)"
-                  : "var(--color-surface-container-low)",
-              }}
-            >
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={(e) => setBoschFile(e.target.files[0])}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
-              <div
-                className="w-12 h-12 rounded-full grid place-items-center mb-3 transition-colors"
-                style={{
-                  background: boschFile
-                    ? "var(--color-primary)"
-                    : "var(--color-surface-container-highest)",
-                }}
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke={
-                    boschFile
-                      ? "var(--color-on-primary)"
-                      : "var(--color-on-surface-variant)"
-                  }
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
+        .ad-root { max-width: 860px; margin: 0 auto; padding: 32px 24px 100px; }
+
+        /* ── Hero ── */
+        .ad-hero {
+          background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 65%, #1e3a5f) 100%);
+          border-radius: 24px;
+          padding: 32px 28px;
+          color: var(--color-on-primary);
+          margin-bottom: 28px;
+          position: relative;
+          overflow: hidden;
+        }
+        .ad-hero::before {
+          content: '';
+          position: absolute;
+          top: -60px; right: -60px;
+          width: 200px; height: 200px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .ad-hero-eyebrow {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 11px; font-weight: 700;
+          letter-spacing: 0.12em; text-transform: uppercase;
+          opacity: 0.75; margin-bottom: 8px;
+        }
+        .ad-hero-title {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 32px; font-weight: 800;
+          letter-spacing: -1px; line-height: 1.1;
+          margin-bottom: 8px;
+        }
+        .ad-hero-sub {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px; opacity: 0.8; line-height: 1.5;
+        }
+
+        /* ── Section card ── */
+        .ad-section {
+          background: var(--color-surface-container-lowest);
+          border: 1px solid var(--color-outline-variant);
+          border-radius: 20px;
+          padding: 24px;
+          margin-bottom: 20px;
+        }
+        .ad-section-title {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 18px; font-weight: 700;
+          color: var(--color-on-surface);
+          margin-bottom: 4px;
+        }
+        .ad-section-sub {
+          font-size: 12.5px;
+          color: var(--color-on-surface-variant);
+          margin-bottom: 20px;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        /* ── Upload cards ── */
+        .ad-upload-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+          margin-bottom: 18px;
+        }
+        .ad-upload-card {
+          border: 2px dashed var(--color-outline-variant);
+          border-radius: 16px;
+          padding: 20px 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          position: relative;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+          background: var(--color-surface-container-low);
+          text-align: center;
+        }
+        .ad-upload-card.selected {
+          border-color: var(--color-primary);
+          background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-container-lowest));
+        }
+        .ad-upload-card input {
+          position: absolute; inset: 0;
+          opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 10;
+        }
+        .ad-upload-icon {
+          width: 44px; height: 44px; border-radius: 12px;
+          display: grid; place-items: center; font-size: 20px;
+          background: var(--color-surface-container);
+          transition: background 0.2s;
+        }
+        .ad-upload-card.selected .ad-upload-icon {
+          background: var(--color-primary);
+        }
+        .ad-upload-label {
+          font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.08em;
+          color: var(--color-outline);
+          font-family: 'DM Sans', sans-serif;
+        }
+        .ad-upload-filename {
+          font-size: 12px; font-weight: 600;
+          color: var(--color-primary);
+          font-family: 'DM Sans', sans-serif;
+          word-break: break-all;
+          line-height: 1.3;
+        }
+        .ad-upload-hint {
+          font-size: 11.5px;
+          color: var(--color-on-surface-variant);
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        /* ── Upload button row ── */
+        .ad-upload-actions {
+          display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .ad-btn-primary {
+          flex: 1; min-width: 140px;
+          padding: 13px 20px; border-radius: 12px; border: none;
+          background: var(--color-primary); color: var(--color-on-primary);
+          font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+          cursor: pointer; transition: opacity 0.2s, transform 0.2s;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .ad-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .ad-btn-primary:not(:disabled):hover { transform: translateY(-2px); }
+        .ad-status-badge {
+          font-size: 13px; font-weight: 600;
+          padding: 8px 14px; border-radius: 10px;
+          background: #dcfce7; color: #166534;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        /* ── Team section header ── */
+        .ad-team-header {
+          display: flex; align-items: flex-start; justify-content: space-between;
+          margin-bottom: 20px; gap: 12px;
+        }
+        .ad-team-count {
+          font-size: 12px; font-weight: 700;
+          padding: 6px 12px; border-radius: 20px;
+          background: var(--color-surface-container);
+          color: var(--color-on-surface);
+          font-family: 'DM Sans', sans-serif;
+          white-space: nowrap; flex-shrink: 0;
+        }
+
+        /* ── User cards ── */
+        .ad-users-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 12px;
+        }
+        .ad-user-card {
+          background: var(--color-surface-container-lowest);
+          border: 1px solid var(--color-outline-variant);
+          border-radius: 16px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+        .ad-user-accent { height: 4px; flex-shrink: 0; }
+        .ad-user-body { padding: 16px; flex: 1; }
+        .ad-user-avatar {
+          width: 40px; height: 40px; border-radius: 12px;
+          display: grid; place-items: center;
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 16px; font-weight: 800;
+          margin-bottom: 12px;
+        }
+        .ad-user-name {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 16px; font-weight: 700;
+          color: var(--color-on-surface);
+          margin-bottom: 3px;
+        }
+        .ad-user-email {
+          font-size: 12px; color: var(--color-on-surface-variant);
+          font-family: 'DM Sans', sans-serif;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          margin-bottom: 12px;
+        }
+        .ad-user-role-pill {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 4px 10px; border-radius: 8px;
+          font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.06em;
+          font-family: 'DM Sans', sans-serif;
+        }
+        .ad-user-footer {
+          padding: 12px 16px;
+          border-top: 1px solid var(--color-outline-variant);
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 8px;
+        }
+        .ad-user-footer-label {
+          font-size: 11px; font-weight: 600;
+          text-transform: uppercase; letter-spacing: 0.06em;
+          color: var(--color-on-surface-variant);
+          font-family: 'DM Sans', sans-serif;
+        }
+        .ad-toggle-btn {
+          font-size: 12px; font-weight: 700;
+          padding: 7px 14px; border-radius: 8px; border: none;
+          background: var(--color-surface-container);
+          color: var(--color-on-surface);
+          font-family: 'DM Sans', sans-serif;
+          cursor: pointer; transition: background 0.15s;
+          white-space: nowrap;
+        }
+        .ad-toggle-btn:hover { background: var(--color-surface-container-high); }
+
+        /* ════ MOBILE ════ */
+        @media (max-width: 768px) {
+          .ad-root { padding: 0 0 90px; }
+
+          .ad-hero {
+            border-radius: 0;
+            padding: 24px 16px 20px;
+            margin-bottom: 0;
+          }
+          .ad-hero-title { font-size: 26px; }
+          .ad-hero-sub { font-size: 13px; }
+
+          .ad-section {
+            border-radius: 0;
+            border-left: none; border-right: none;
+            padding: 20px 16px;
+            margin-bottom: 8px;
+          }
+          .ad-section:first-of-type { border-top: none; margin-top: 8px; }
+
+          /* Upload: stack vertically on mobile */
+          .ad-upload-grid { grid-template-columns: 1fr; gap: 10px; }
+          .ad-upload-card { flex-direction: row; text-align: left; padding: 14px 16px; gap: 14px; }
+          .ad-upload-card .ad-upload-icon { flex-shrink: 0; width: 40px; height: 40px; }
+          .ad-upload-card-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+          .ad-upload-label { margin-bottom: 0; }
+
+          .ad-btn-primary { width: 100%; }
+
+          /* User cards: horizontal scroll strip on mobile */
+          .ad-users-grid {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 4px 0 12px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .ad-users-grid::-webkit-scrollbar { display: none; }
+          .ad-user-card {
+            min-width: 220px;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+          }
+          .ad-team-header { margin-bottom: 12px; }
+        }
+      `}</style>
+
+      <div className="ad-root" ref={contentRef}>
+        {/* Hero */}
+        <div className="ad-hero ad-anim">
+          <div className="ad-hero-eyebrow">Admin Portal</div>
+          <h1 className="ad-hero-title">System Dashboard</h1>
+          <p className="ad-hero-sub">Manage inventory files and system personnel.</p>
+        </div>
+
+        {/* Upload Section */}
+        <div className="ad-section ad-anim">
+          <div className="ad-section-title">Update Stock Data</div>
+          <div className="ad-section-sub">Upload Excel files to sync latest inventory</div>
+
+          <div className="ad-upload-grid">
+            {/* Bosch */}
+            <div className={`ad-upload-card${boschFile ? " selected" : ""}`}>
+              <input type="file" accept=".xlsx,.xls" onChange={(e) => setBoschFile(e.target.files[0])} />
+              <div className="ad-upload-icon">
+                {boschFile ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-on-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : "📄"}
               </div>
-              <span
-                className="font-semibold text-center"
-                style={{
-                  color: boschFile
-                    ? "var(--color-on-primary-fixed)"
-                    : "var(--color-on-surface)",
-                }}
-              >
-                {boschFile ? boschFile.name : "Select Bosch Excel"}
-              </span>
+              <div className="ad-upload-card-text">
+                <span className="ad-upload-label">Bosch Stock</span>
+                {boschFile
+                  ? <span className="ad-upload-filename">{boschFile.name}</span>
+                  : <span className="ad-upload-hint">Tap to select .xlsx</span>
+                }
+              </div>
+            </div>
+
+            {/* Company */}
+            <div className={`ad-upload-card${companyFile ? " selected" : ""}`}>
+              <input type="file" accept=".xlsx,.xls" onChange={(e) => setCompanyFile(e.target.files[0])} />
+              <div className="ad-upload-icon">
+                {companyFile ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-on-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : "🏢"}
+              </div>
+              <div className="ad-upload-card-text">
+                <span className="ad-upload-label">Company Stock</span>
+                {companyFile
+                  ? <span className="ad-upload-filename">{companyFile.name}</span>
+                  : <span className="ad-upload-hint">Tap to select .xlsx</span>
+                }
+              </div>
             </div>
           </div>
 
-          {/* Company Upload */}
-          <div className="relative group">
-            <label
-              className="block text-sm font-bold mb-3 uppercase tracking-wide"
-              style={{ color: "var(--color-outline)" }}
+          <div className="ad-upload-actions">
+            <button
+              className="ad-btn-primary"
+              onClick={onUpdateStock}
+              disabled={loading || (!boschFile && !companyFile)}
             >
-              Company Stock File
-            </label>
-            <div
-              className="relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl transition-all duration-300"
-              style={{
-                borderColor: companyFile
-                  ? "var(--color-primary)"
-                  : "var(--color-outline-variant)",
-                background: companyFile
-                  ? "var(--color-primary-fixed)"
-                  : "var(--color-surface-container-low)",
-              }}
-            >
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={(e) => setCompanyFile(e.target.files[0])}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
-              <div
-                className="w-12 h-12 rounded-full grid place-items-center mb-3 transition-colors"
-                style={{
-                  background: companyFile
-                    ? "var(--color-primary)"
-                    : "var(--color-surface-container-highest)",
-                }}
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke={
-                    companyFile
-                      ? "var(--color-on-primary)"
-                      : "var(--color-on-surface-variant)"
-                  }
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-              </div>
-              <span
-                className="font-semibold text-center"
-                style={{
-                  color: companyFile
-                    ? "var(--color-on-primary-fixed)"
-                    : "var(--color-on-surface)",
-                }}
-              >
-                {companyFile ? companyFile.name : "Select Company Excel"}
-              </span>
+              {loading ? "Processing…" : "⬆ Update Stock"}
+            </button>
+            {uploadStatus && (
+              <span className="ad-status-badge">✓ {uploadStatus}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Team Members */}
+        <div className="ad-section ad-anim">
+          <div className="ad-team-header">
+            <div>
+              <div className="ad-section-title">Team Members</div>
+              <div className="ad-section-sub" style={{ marginBottom: 0 }}>Manage access and roles</div>
             </div>
+            <span className="ad-team-count">{allSalesUsers?.length || 0} users</span>
           </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          <button
-            onClick={onUpdateStock}
-            disabled={loading || (!boschFile && !companyFile)}
-            className="px-8 py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:-translate-y-1 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none w-full sm:w-auto"
-            style={{
-              background: "var(--color-primary)",
-              color: "var(--color-on-primary)",
-            }}
-          >
-            {loading ? "Processing..." : "Update Stock"}
-          </button>
-          {uploadStatus && (
-            <span className="font-semibold px-4 py-2 rounded-lg text-sm sm:text-base text-center w-full sm:w-auto text-green-700 bg-green-100">
-              {uploadStatus}
-            </span>
-          )}
-        </div>
-      </section>
-
-      {/* Team Members Section */}
-      <section ref={usersRef}>
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2
-              className="text-2xl font-bold"
-              style={{
-                color: "var(--color-on-surface)",
-                fontFamily: "'Bricolage Grotesque', sans-serif",
-              }}
-            >
-              Team Members
-            </h2>
-            <p
-              className="text-sm mt-1"
-              style={{ color: "var(--color-on-surface-variant)" }}
-            >
-              Manage system access and roles
-            </p>
-          </div>
-          <div
-            className="text-sm font-bold px-4 py-2 rounded-full shadow-sm"
-            style={{
-              background: "var(--color-surface-container)",
-              color: "var(--color-on-surface)",
-            }}
-          >
-            Total: {allSalesUsers?.length || 0}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allSalesUsers?.map((u) => (
-            <div
-              key={u._id}
-              className="p-6 rounded-2xl border shadow-sm transition-all relative overflow-hidden bg-white"
-            >
-              {/* Left accent bar */}
-              <div
-                className="absolute top-0 left-0 w-2 h-full"
-                style={{
-                  background:
-                    u.role === "admin"
-                      ? "var(--color-tertiary-fixed-dim)"
-                      : "var(--color-primary)",
-                }}
-              />
-
-              <div className="pl-4">
-                {/* User info */}
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold mb-1 text-gray-900">
-                    {u.name}
-                  </h3>
-                  <p className="text-sm mb-4 truncate w-40 text-gray-500">
-                    {u.email}
-                  </p>
-                  <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider"
-                    style={{
-                      background:
-                        u.role === "admin"
-                          ? "var(--color-tertiary-container)"
-                          : "var(--color-primary-container)",
-                      color:
-                        u.role === "admin"
-                          ? "var(--color-on-tertiary-container)"
-                          : "var(--color-on-primary-container)",
-                    }}
-                  >
-                    {u.role}
-                  </span>
+          <div className="ad-users-grid">
+            {allSalesUsers?.map((u) => {
+              const isAdmin = u.role === "admin";
+              const accentColor = isAdmin ? "var(--color-tertiary-fixed-dim, #7c4dff)" : "var(--color-primary)";
+              const pillBg = isAdmin ? "var(--color-tertiary-container)" : "var(--color-primary-container)";
+              const pillColor = isAdmin ? "var(--color-on-tertiary-container)" : "var(--color-on-primary-container)";
+              const initials = u.name ? u.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "??";
+              return (
+                <div className="ad-user-card" key={u._id}>
+                  <div className="ad-user-accent" style={{ background: accentColor }} />
+                  <div className="ad-user-body">
+                    <div className="ad-user-avatar" style={{ background: `color-mix(in srgb, ${accentColor} 15%, transparent)`, color: accentColor }}>
+                      {initials}
+                    </div>
+                    <div className="ad-user-name">{u.name}</div>
+                    <div className="ad-user-email" title={u.email}>{u.email}</div>
+                    <span className="ad-user-role-pill" style={{ background: pillBg, color: pillColor }}>
+                      {u.role}
+                    </span>
+                  </div>
+                  <div className="ad-user-footer">
+                    <span className="ad-user-footer-label">Access Level</span>
+                    <button className="ad-toggle-btn" onClick={() => toggleRole(u)}>
+                      → {isAdmin ? "Sales" : "Admin"}
+                    </button>
+                  </div>
                 </div>
-
-                {/* Access Level + Toggle */}
-                <div className="pt-4 border-t flex items-center justify-between border-gray-200">
-                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Access Level
-                  </span>
-                  <button
-                    onClick={() => toggleRole(u)}
-                    className="text-sm font-bold px-4 py-2 rounded-lg transition-colors shadow-sm bg-gray-100 hover:bg-gray-200 text-gray-800"
-                  >
-                    Set to {u.role === "admin" ? "Sales" : "Admin"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </>
   );
 };
 

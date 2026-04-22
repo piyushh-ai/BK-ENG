@@ -123,26 +123,55 @@ const OverviewSection = React.memo(({ sheets, sheetsLoading, masterQuery, setMas
   const heroRef = useRef(null);
   const cardsRef = useRef(null);
   const searchRef2 = useRef(null);
+  const marqueeRef = useRef(null);
+  const marqueeAnim = useRef(null);
 
+  const LOGOS = [
+    { src: "/campany_images/ascot1.png",    name: "Ascot" },
+    { src: "/campany_images/Bosch_logo.png", name: "Bosch" },
+    { src: "/campany_images/delphi_tvs.png", name: "Delphi TVS" },
+    { src: "/campany_images/gy.png",         name: "GY" },
+    { src: "/campany_images/lucas.png",      name: "Lucas" },
+    { src: "/campany_images/nbc.png",        name: "NBC" },
+    { src: "/campany_images/rmp.png",        name: "RMP" },
+  ];
+
+  // Infinite marquee with GSAP
+  useEffect(() => {
+    const el = marqueeRef.current;
+    if (!el) return;
+    const totalW = el.scrollWidth / 2;
+    marqueeAnim.current = gsap.to(el, {
+      x: -totalW, duration: 22, ease: "none", repeat: -1,
+      onRepeat: () => gsap.set(el, { x: 0 }),
+    });
+    el.addEventListener("mouseenter", () => marqueeAnim.current?.pause());
+    el.addEventListener("mouseleave", () => marqueeAnim.current?.resume());
+    return () => { marqueeAnim.current?.kill(); };
+  }, []);
+
+  // Hero + cards entrance
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.fromTo(heroRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power4.out", onComplete: () => gsap.set(heroRef.current, { clearProps: "transform" }) });
-      gsap.fromTo(heroRef.current.children, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.08, delay: 0.2, onComplete: () => gsap.set(heroRef.current.children, { clearProps: "transform" }) });
-      if (searchRef2.current) gsap.fromTo(searchRef2.current, { x: -16, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out", delay: 0.35, onComplete: () => gsap.set(searchRef2.current, { clearProps: "transform" }) });
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      tl.fromTo(heroRef.current, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75 })
+        .fromTo(heroRef.current.children, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.09 }, "-=0.45")
+        .fromTo(searchRef2.current, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45 }, "-=0.3");
       const cards = cardsRef.current?.querySelectorAll(".sd-stat-card");
-      if (cards?.length) gsap.fromTo(cards, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.08, delay: 0.4, onComplete: () => gsap.set(cards, { clearProps: "transform" }) });
+      if (cards?.length) tl.fromTo(cards, { y: 28, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.4)", onComplete: () => gsap.set(cards, { clearProps: "transform" }) }, "-=0.2");
     });
     return () => ctx.revert();
   }, []);
 
   const statCards = [
     { id: "company", icon: "🏢", label: "Company Sheets", value: sheetsLoading ? "…" : sheets.length || 0, bg: "var(--color-secondary-container)", color: "var(--color-on-secondary-container)" },
-    { id: "bosch", icon: "⚙️", label: "Bosch Parts", value: "Live", bg: "color-mix(in srgb, #ba1a1a 18%, transparent)", color: "#ba1a1a" },
-    { id: "history", icon: "📦", label: "Pending Orders", value: "0", bg: "var(--color-tertiary-fixed, #d0f0e8)", color: "var(--color-on-tertiary-fixed, #0a3d2e)" },
+    { id: "bosch",   icon: "⚙️", label: "Bosch Parts",    value: "Live", bg: "color-mix(in srgb, #ba1a1a 18%, transparent)", color: "#ba1a1a" },
+    { id: "history", icon: "📦", label: "Order History",  value: "View", bg: "var(--color-tertiary-fixed, #d0f0e8)", color: "var(--color-on-tertiary-fixed, #0a3d2e)" },
   ];
 
   return (
     <div>
+      {/* ── Hero ── */}
       <div className="sd-hero-card" ref={heroRef}>
         <div className="sd-hero-eyebrow">B.K Engineering · Sales Portal</div>
         <h1 className="sd-hero-title">Sales Gateway</h1>
@@ -177,6 +206,22 @@ const OverviewSection = React.memo(({ sheets, sheetsLoading, masterQuery, setMas
           )}
         </div>
       </div>
+
+      {/* ── Brand Logo Marquee ── */}
+      <div className="sd-marquee-outer">
+        <div className="sd-marquee-label">Our Brands</div>
+        <div className="sd-marquee-track">
+          <div className="sd-marquee-inner" ref={marqueeRef}>
+            {[...LOGOS, ...LOGOS].map((logo, i) => (
+              <div className="sd-logo-pill" key={i}>
+                <img src={logo.src} alt={logo.name} className="sd-logo-img" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Stat Cards ── */}
       <div className="sd-overview-grid" ref={cardsRef}>
         {statCards.map(({ id, icon, label, value, bg, color }) => (
           <div className="sd-stat-card" key={id} onClick={() => handleTabChange(id)}>
@@ -222,6 +267,10 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
 
   // Mobile view toggle: "grid" | "list"
   const [mobileView, setMobileView] = useState("grid");
+
+  // Mobile sheet drawer
+  const [sheetDrawerOpen, setSheetDrawerOpen] = useState(false);
+  const [sheetSearch, setSheetSearch] = useState("");
 
   const LIMIT = 12;
   const searchRef = useRef(null);
@@ -310,7 +359,162 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
         .sd-view-btn { width:32px; height:32px; border:none; border-radius:7px; background:transparent; cursor:pointer; display:grid; place-items:center; color:var(--color-on-surface-variant); transition:all 0.15s; font-size:15px; }
         .sd-view-btn.active { background:var(--color-primary); color:var(--color-on-primary); }
 
+        /* ── Mobile Sheet Picker Trigger ── */
+        .sd-sheet-picker-btn {
+          display: none;
+          width: 100%;
+          padding: 12px 16px;
+          background: var(--color-surface-container-lowest);
+          border: 1.5px solid var(--color-outline-variant);
+          border-radius: 12px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px; font-weight: 600;
+          color: var(--color-on-surface);
+          cursor: pointer;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          text-align: left;
+          transition: border-color 0.18s;
+          margin-bottom: 0;
+        }
+        .sd-sheet-picker-btn:active { background: var(--color-surface-container); }
+        .sd-sheet-picker-selected { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sd-sheet-picker-meta { font-size: 11px; color: var(--color-outline); font-weight: 500; flex-shrink: 0; }
+        .sd-sheet-picker-arrow { font-size: 13px; color: var(--color-outline); flex-shrink: 0; }
+
+        /* ── Bottom Drawer Overlay ── */
+        .sd-drawer-overlay {
+          display: none;
+          position: fixed; inset: 0; z-index: 9998;
+          background: rgba(0,0,0,0.45);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          animation: sdOverlayIn 0.22s ease both;
+        }
+        .sd-drawer-overlay.open { display: block; }
+        @keyframes sdOverlayIn { from{opacity:0} to{opacity:1} }
+
+        /* ── Bottom Drawer ── */
+        .sd-sheet-drawer {
+          position: fixed;
+          bottom: 0; left: 0; right: 0;
+          z-index: 9999;
+          background: var(--color-surface-container-lowest);
+          border-radius: 24px 24px 0 0;
+          padding: 0 0 env(safe-area-inset-bottom, 16px);
+          box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
+          max-height: 82svh;
+          display: flex; flex-direction: column;
+          animation: sdDrawerUp 0.32s cubic-bezier(0.32,0.72,0,1) both;
+          transform-origin: bottom;
+        }
+        @keyframes sdDrawerUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        .sd-drawer-handle {
+          width: 36px; height: 4px; border-radius: 2px;
+          background: var(--color-outline-variant);
+          margin: 12px auto 0;
+          flex-shrink: 0;
+        }
+        .sd-drawer-header {
+          padding: 16px 20px 12px;
+          border-bottom: 1px solid var(--color-outline-variant);
+          flex-shrink: 0;
+        }
+        .sd-drawer-title {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-size: 18px; font-weight: 700;
+          color: var(--color-on-surface);
+          margin-bottom: 12px;
+        }
+        .sd-drawer-search {
+          width: 100%; padding: 10px 16px 10px 40px;
+          background: var(--color-surface-container);
+          border: 1.5px solid var(--color-outline-variant);
+          border-radius: 10px;
+          font-family: 'DM Sans', sans-serif; font-size: 14px;
+          color: var(--color-on-surface);
+          outline: none; box-sizing: border-box;
+          transition: border-color 0.18s;
+        }
+        .sd-drawer-search:focus { border-color: var(--color-primary); }
+        .sd-drawer-search::placeholder { color: var(--color-outline); }
+        .sd-drawer-search-wrap { position: relative; }
+        .sd-drawer-search-icon {
+          position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+          font-size: 14px; pointer-events: none; color: var(--color-outline);
+        }
+        .sd-drawer-list {
+          overflow-y: auto; flex: 1;
+          padding: 8px 12px 16px;
+          -webkit-overflow-scrolling: touch;
+        }
+        .sd-drawer-item {
+          width: 100%; border: none; background: transparent;
+          padding: 13px 14px; border-radius: 12px;
+          font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+          color: var(--color-on-surface);
+          cursor: pointer; text-align: left; display: flex;
+          align-items: center; justify-content: space-between;
+          gap: 12px; transition: background 0.15s;
+        }
+        .sd-drawer-item:hover, .sd-drawer-item:active { background: var(--color-surface-container); }
+        .sd-drawer-item.active {
+          background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+          color: var(--color-primary); font-weight: 700;
+        }
+        .sd-drawer-item-check { font-size: 16px; flex-shrink: 0; }
+        .sd-drawer-empty {
+          text-align: center; padding: 32px 20px;
+          color: var(--color-on-surface-variant); font-size: 14px;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        /* ── Brand Marquee ── */
+        .sd-marquee-outer {
+          padding: 28px 0 0;
+          grid-column: 1 / -1;
+        }
+        .sd-marquee-label {
+          font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+          text-transform: uppercase; color: var(--color-on-surface-variant);
+          opacity: 0.6; margin-bottom: 14px; padding: 0 36px;
+          font-family: 'DM Sans', sans-serif;
+        }
+        .sd-marquee-track {
+          overflow: hidden;
+          -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+        }
+        .sd-marquee-inner {
+          display: flex; align-items: center; gap: 16px;
+          width: max-content; padding: 4px 0 12px;
+        }
+        .sd-logo-pill {
+          background: var(--color-surface-container-lowest);
+          border: 1px solid var(--color-outline-variant);
+          border-radius: 16px;
+          padding: 12px 20px;
+          display: flex; align-items: center; justify-content: center;
+          height: 64px; min-width: 110px;
+          flex-shrink: 0;
+          transition: box-shadow 0.2s, border-color 0.2s;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .sd-logo-pill:hover {
+          border-color: var(--color-primary);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+        }
+        .sd-logo-img {
+          height: 36px; max-width: 90px;
+          object-fit: contain; object-position: center;
+          filter: grayscale(0.2); opacity: 0.85;
+          transition: filter 0.2s, opacity 0.2s;
+        }
+        .sd-logo-pill:hover .sd-logo-img { filter: grayscale(0); opacity: 1; }
+
         /* Sheet bar */
+
         .sd-sheet-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
         .sd-sheet-chip { padding:7px 16px; border-radius:20px; border:1.5px solid var(--color-outline-variant); background:var(--color-surface-container-lowest); font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:500; color:var(--color-on-surface-variant); cursor:pointer; transition:all 0.16s; white-space:nowrap; }
         .sd-sheet-chip:hover { border-color:var(--color-primary); color:var(--color-primary); }
@@ -371,31 +575,24 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
           .sd-page-title { font-size: 20px; }
           .sd-page-sub { font-size: 12.5px; }
 
-          /* ── Sheet bar: sticky, single-row horizontal scroll ── */
-          .sd-sheet-bar {
+          /* ── Sheet bar: hide on mobile, replaced by drawer ── */
+          .sd-sheet-bar { display: none !important; }
+
+          /* ── Sheet picker button: visible only on mobile ── */
+          .sd-sheet-picker-btn { display: flex; }
+          .sd-sheet-picker-wrap {
             position: sticky;
-            top: 56px; /* SalesNavbar height on mobile */
+            top: 56px;
             z-index: 40;
             background: var(--color-background);
-            margin: 0;
             padding: 10px 14px;
             border-bottom: 1px solid var(--color-outline-variant);
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            gap: 8px;
-            /* fade-out right edge to hint scroll */
-            -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-            mask-image: linear-gradient(to right, black 85%, transparent 100%);
           }
-          .sd-sheet-bar::-webkit-scrollbar { display: none; }
-          .sd-sheet-chip { flex-shrink: 0; padding: 6px 14px; font-size: 12px; }
 
-          /* ── Controls bar — sticky below sheet bar ── */
+          /* ── Controls bar — sticky below sheet picker ── */
           .sd-controls {
             position: sticky;
-            top: calc(56px + 53px); /* navbar(56) + sheet-bar(53) */
+            top: calc(56px + 57px); /* navbar(56) + sheet-picker(57) */
             z-index: 39;
             background: var(--color-background);
             padding: 10px 14px;
@@ -432,6 +629,12 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
           .sd-stat-card { padding: 16px 14px; border-radius: 16px; }
           .sd-stat-value { font-size: 26px; }
           .sd-stat-icon { width: 44px; height: 44px; font-size: 18px; }
+
+          /* Marquee mobile */
+          .sd-marquee-outer { padding: 20px 0 0; }
+          .sd-marquee-label { padding: 0 14px; margin-bottom: 10px; }
+          .sd-logo-pill { height: 52px; min-width: 88px; padding: 10px 14px; border-radius: 12px; }
+          .sd-logo-img { height: 28px; max-width: 70px; }
         }
 
         @media (max-width: 400px) {
@@ -475,23 +678,90 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
           {/* ══ COMPANY / BOSCH STOCK TAB ══ */}
           {isStockTab && (
             <>
-              {/* Sheet chips — sticky on mobile */}
+              {/* Sheet chips — desktop only */}
               {activeTab === "company" && (
-                <div className="sd-sheet-bar">
-                  {sheetsLoading
-                    ? [1, 2, 3].map((k) => (
-                        <div key={k} style={{ width: "80px", height: "32px", flexShrink: 0, background: "var(--color-surface-container)", borderRadius: "20px", animation: "sdSkeletonPulse 1.4s ease-in-out infinite" }} />
-                      ))
-                    : sheets.map((sheet) => {
-                        const name = typeof sheet === "string" ? sheet : sheet.sheetName;
-                        const sel = typeof selectedSheet === "string" ? selectedSheet : selectedSheet?.sheetName;
-                        return (
-                          <button key={name} className={`sd-sheet-chip${name === sel ? " active" : ""}`} onClick={() => handleSheetSelect(sheet)} id={`sheet-chip-${name}`}>
-                            {name}
-                          </button>
-                        );
-                      })}
-                </div>
+                <>
+                  {/* Desktop chip bar */}
+                  <div className="sd-sheet-bar">
+                    {sheetsLoading
+                      ? [1, 2, 3].map((k) => (
+                          <div key={k} style={{ width: "80px", height: "32px", flexShrink: 0, background: "var(--color-surface-container)", borderRadius: "20px", animation: "sdSkeletonPulse 1.4s ease-in-out infinite" }} />
+                        ))
+                      : sheets.map((sheet) => {
+                          const name = typeof sheet === "string" ? sheet : sheet.sheetName;
+                          const sel = typeof selectedSheet === "string" ? selectedSheet : selectedSheet?.sheetName;
+                          return (
+                            <button key={name} className={`sd-sheet-chip${name === sel ? " active" : ""}`} onClick={() => handleSheetSelect(sheet)} id={`sheet-chip-${name}`}>
+                              {name}
+                            </button>
+                          );
+                        })}
+                  </div>
+
+                  {/* Mobile: compact trigger button */}
+                  <div className="sd-sheet-picker-wrap">
+                    <button
+                      className="sd-sheet-picker-btn"
+                      onClick={() => { setSheetDrawerOpen(true); setSheetSearch(""); }}
+                      id="sd-sheet-picker-trigger"
+                    >
+                      <span style={{ fontSize: "16px", flexShrink: 0 }}>🏢</span>
+                      <span className="sd-sheet-picker-selected">
+                        {sheetsLoading ? "Loading sheets…" : (typeof selectedSheet === "string" ? selectedSheet : selectedSheet?.sheetName) || "Select sheet"}
+                      </span>
+                      <span className="sd-sheet-picker-meta">{sheets.length} sheets</span>
+                      <span className="sd-sheet-picker-arrow">▾</span>
+                    </button>
+                  </div>
+
+                  {/* Mobile: Bottom Sheet Drawer */}
+                  {sheetDrawerOpen && (
+                    <>
+                      <div className="sd-drawer-overlay open" onClick={() => setSheetDrawerOpen(false)} />
+                      <div className="sd-sheet-drawer">
+                        <div className="sd-drawer-handle" />
+                        <div className="sd-drawer-header">
+                          <div className="sd-drawer-title">Select Company Sheet</div>
+                          <div className="sd-drawer-search-wrap">
+                            <span className="sd-drawer-search-icon">🔍</span>
+                            <input
+                              className="sd-drawer-search"
+                              type="text"
+                              placeholder="Search sheets…"
+                              value={sheetSearch}
+                              onChange={(e) => setSheetSearch(e.target.value)}
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+                        <div className="sd-drawer-list">
+                          {(() => {
+                            const selName = typeof selectedSheet === "string" ? selectedSheet : selectedSheet?.sheetName;
+                            const filtered = sheets.filter((s) => {
+                              const n = typeof s === "string" ? s : s.sheetName;
+                              return n.toLowerCase().includes(sheetSearch.toLowerCase());
+                            });
+                            if (filtered.length === 0) return <div className="sd-drawer-empty">No sheets found</div>;
+                            return filtered.map((sheet) => {
+                              const name = typeof sheet === "string" ? sheet : sheet.sheetName;
+                              const isActive = name === selName;
+                              return (
+                                <button
+                                  key={name}
+                                  className={`sd-drawer-item${isActive ? " active" : ""}`}
+                                  onClick={() => { handleSheetSelect(sheet); setSheetDrawerOpen(false); }}
+                                >
+                                  {name}
+                                  {isActive && <span className="sd-drawer-item-check">✓</span>}
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
               )}
 
               {/* Search + view toggle */}
