@@ -42,7 +42,7 @@ app.use("/api/admin", adminRouter);
 
 app.get("/version", (req, res) => {
   res.json({
-    version: "2.0.5",
+    version: "2.0.4",
     updateUrl:
       "https://drive.google.com/file/d/1jHjSH72GIlFhMxc7ZQkCKpdyrXYA0nxo/view?usp=drive_link",
     forceUpdate: true,
