@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { appRouter } from "./app.routes";
 import { getMe } from "../features/auth/services/auth.api";
@@ -45,9 +45,7 @@ const App = () => {
 
   return (
     <div>
-      <Suspense fallback={<GlobalLoader />}>
-        <RouterProvider router={appRouter} />
-      </Suspense>
+      <RouterProvider router={appRouter} />
     </div>
   );
 };

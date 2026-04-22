@@ -1,14 +1,16 @@
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AdminOrderDetail from "../features/admin/components/AdminOrderDetail";
+import AdminDashboard from "../features/admin/pages/AdminDashboard";
+import SalesDashboard from "../features/sales/pages/SalesDashboard";
+import Protected from "../features/auth/components/Protected";
+import GlobalLoader from "./GlobalLoader";
 
+// Auth pages: lazy is fine — notifications never navigate here
 const Login = lazy(() => import("../features/auth/pages/Login"));
 const Register = lazy(() => import("../features/auth/pages/Register"));
 const ForgotPassword = lazy(() => import("../features/auth/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("../features/auth/pages/ResetPassword"));
-const Protected = lazy(() => import("../features/auth/components/Protected"));
-const AdminDashboard = lazy(() => import("../features/admin/pages/AdminDashboard"));
-const SalesDashboard = lazy(() => import("../features/sales/pages/SalesDashboard"));
 
 export const appRouter = createBrowserRouter([
   {
@@ -16,7 +18,7 @@ export const appRouter = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/sales/overview" replace />
+        element: <Navigate to="/sales/overview" replace />,
       },
     ],
   },
@@ -25,7 +27,7 @@ export const appRouter = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/sales/overview" replace />
+        element: <Navigate to="/sales/overview" replace />,
       },
       {
         path: ":tab",
@@ -39,26 +41,42 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <Login />,
+    element: (
+      <Suspense fallback={<GlobalLoader />}>
+        <Login />
+      </Suspense>
+    ),
   },
   {
     path: "/register",
-    element: <Register />,
+    element: (
+      <Suspense fallback={<GlobalLoader />}>
+        <Register />
+      </Suspense>
+    ),
   },
   {
     path: "/forgot-password",
-    element: <ForgotPassword />,
+    element: (
+      <Suspense fallback={<GlobalLoader />}>
+        <ForgotPassword />
+      </Suspense>
+    ),
   },
   {
     path: "/reset-password",
-    element: <ResetPassword />,
+    element: (
+      <Suspense fallback={<GlobalLoader />}>
+        <ResetPassword />
+      </Suspense>
+    ),
   },
   {
     path: "/admin",
     children: [
       {
         index: true,
-        element: <Navigate to="/admin/system" replace />
+        element: <Navigate to="/admin/system" replace />,
       },
       {
         path: ":tab",
@@ -72,11 +90,10 @@ export const appRouter = createBrowserRouter([
         path: "/admin/order/:orderId",
         element: (
           <Protected role="admin">
-            <AdminOrderDetail  />
+            <AdminOrderDetail />
           </Protected>
         ),
-      }
+      },
     ],
   },
 ]);
-

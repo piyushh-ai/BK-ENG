@@ -868,43 +868,70 @@ const OrderHistory = () => {
           transition: transform 0.3s;
         }
         
-        @media (max-width: 600px) {
-          /* Specific overlay alignments */
+        @media (max-width: 768px) {
+          /* Remove wrap padding — sections handle their own spacing */
+          .oh-wrap { padding: 0; }
+
+          /* ── Hero header — gradient card like other pages ── */
+          .oh-header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 70%, #1e40af) 100%);
+            color: var(--color-on-primary);
+            padding: 28px 16px 24px;
+            margin-bottom: 0;
+            position: relative;
+            overflow: hidden;
+          }
+          .oh-header::before {
+            content: '';
+            position: absolute; top: -40px; right: -40px;
+            width: 160px; height: 160px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+            pointer-events: none;
+          }
+          .oh-eyebrow { color: rgba(255,255,255,0.75); }
+          .oh-eyebrow::before { background: rgba(255,255,255,0.75); }
+          .oh-title { font-size: 28px; color: #fff; margin-bottom: 4px; }
+          .oh-sub { color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 0; }
+
+          /* Search */
+          .oh-search-wrap { margin: 14px 14px 0; }
+
+          /* Cards */
+          .oh-card { margin: 10px 14px 0; border-radius: 14px; padding: 16px; }
+          .oh-card:hover { transform: none; }
+          .oh-party { font-size: 15px; }
+          .oh-date { font-size: 11.5px; }
+          .oh-thumb { width: 46px; height: 46px; }
+          .oh-thumb-more { width: 46px; height: 46px; font-size: 11px; }
+          .oh-view-btn, .oh-del-btn { padding: 7px 12px; font-size: 12px; }
+
+          /* Search label + pagination */
+          .oh-search-label { margin: 10px 14px 0; }
+          .oh-pagination { padding: 0 14px; margin-top: 16px; }
+          .oh-empty { padding: 48px 20px; }
+          .oh-loader { padding: 40px 20px; }
+
+          /* Modals */
           .oh-overlay-large { padding: 20px 0 0 0; align-items: flex-end; }
           .oh-overlay-small { padding: 20px; align-items: center; }
-
-          /* Detail Modal adjustments */
-          .oh-modal-large { 
-            border-radius: 24px 24px 0 0; 
-            margin-top: auto; 
-            max-height: 85vh; 
-            border-bottom: none; 
-            width: 100%; 
-            padding-bottom: env(safe-area-inset-bottom, 20px); 
+          .oh-modal-large {
+            border-radius: 24px 24px 0 0;
+            margin-top: auto; max-height: 85vh;
+            border-bottom: none; width: 100%;
+            padding-bottom: env(safe-area-inset-bottom, 20px);
           }
-          .oh-d-header { 
-            padding: 24px 48px 16px 20px; /* Right padding 48px to prevent overlap with close button */
-            flex-direction: column; 
-            gap: 12px;
-          }
+          .oh-d-header { padding: 24px 48px 16px 20px; flex-direction: column; gap: 12px; }
           .oh-d-body { padding: 16px 20px 40px; }
           .oh-modal-close { top: 16px; right: 16px; background: var(--color-surface-container-high); }
           .oh-d-party { font-size: 20px; margin-bottom: 2px; }
           .oh-d-desc { font-size: 14px; padding: 14px; }
           .oh-d-image-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
-
-          /* Confirm Modal adjustments */
-          .oh-modal-small {
-            padding: 28px 20px 24px;
-            width: 100%;
-            margin: 0 auto;
-          }
+          .oh-modal-small { padding: 28px 20px 24px; width: 100%; margin: 0 auto; }
           .oh-modal-icon-danger { font-size: 34px; margin-bottom: 12px; }
           .oh-modal-title { font-size: 20px; }
           .oh-modal-text { font-size: 13.5px; margin-bottom: 24px; }
           .oh-modal-actions { flex-direction: column; gap: 10px; }
           .oh-btn-cancel, .oh-btn-danger { width: 100%; padding: 14px; font-size: 14.5px; }
-          /* Image Preview Modal adjustments */
           .oh-img-close { top: 12px; right: 12px; width: 36px; height: 36px; font-size: 16px; }
           .oh-img-full { max-height: calc(90vh - 70px); }
           .oh-img-download { width: 100%; text-align: center; }
