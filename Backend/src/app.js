@@ -42,7 +42,7 @@ app.get("/version", (req, res) => {
   res.json({
     version: "2.0.4",
     updateUrl:
-      "https://drive.google.com/file/d/1LHHn35hkepZU-H_IUiUMX_KnjfAH4af-/view?usp=sharing",
+      "https://drive.google.com/file/d/1l6HQCg5U5j2GsTWbsCRnSK1S_Osca4oG/view?usp=sharing",
     forceUpdate: true,
   });
 });
