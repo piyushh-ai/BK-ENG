@@ -505,6 +505,21 @@ const AdminOrderList = () => {
   const [viewMode, setViewMode] = useState("grouped_salesman");
   const [sortOrder, setSortOrder] = useState("date_desc");
 
+  // Banner State
+  const [showDeleteBanner, setShowDeleteBanner] = useState(() => {
+    const lastHidden = localStorage.getItem("hideDeleteBannerDate");
+    if (lastHidden) {
+      const today = new Date().toDateString();
+      if (lastHidden === today) return false;
+    }
+    return true;
+  });
+
+  const hideBanner = () => {
+    localStorage.setItem("hideDeleteBannerDate", new Date().toDateString());
+    setShowDeleteBanner(false);
+  };
+
   const [searchParams] = useSearchParams();
   const highlightOrderId = searchParams.get("orderId");
   const listRef = useRef(null);
@@ -961,8 +976,46 @@ const AdminOrderList = () => {
       "partial",
       "cancelled",
     ];
+    
+    // Calculate last day of the month
+    const nextDeleteDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+
     return (
       <div style={{ width: "100%", padding: "0 0 48px" }}>
+        {/* Deletion Warning Banner */}
+        {showDeleteBanner && (
+          <div style={{
+            background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
+            border: "1px solid #fecdd3",
+            borderRadius: 12, padding: "12px 16px", marginBottom: 16,
+            display: "flex", alignItems: "center", gap: 12,
+            boxShadow: "0 2px 8px rgba(225,29,72,0.04)",
+            position: "relative"
+          }}>
+            <button 
+              onClick={hideBanner}
+              style={{
+                position: "absolute", top: 12, right: 12, background: "transparent",
+                border: "none", color: "#f43f5e", cursor: "pointer", padding: 4
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, background: "#f43f5e", color: "#fff",
+              display: "grid", placeItems: "center", flexShrink: 0
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div style={{ flex: 1, paddingRight: 30 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#be123c", marginBottom: 2 }}>System Auto-Cleanup Notice</div>
+              <div style={{ fontSize: 12, color: "#9f1239", fontWeight: 500 }}>
+                All orders and attached images will be permanently deleted on <strong>{nextDeleteDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} at 11:55 PM</strong>.
+              </div>
+            </div>
+          </div>
+        )}
+
         {!loading && allOrders?.length > 0 && (
           <StatsBar allOrders={allOrders} />
         )}
@@ -1069,9 +1122,45 @@ const AdminOrderList = () => {
   }
 
   /* ── MOBILE ── */
+  const nextDeleteDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+  
   return (
     <div style={{ width: "100%", padding: "0 0 40px" }}>
-      <div style={{ marginBottom: 10 }}>
+      {/* Deletion Warning Banner */}
+      {showDeleteBanner && (
+        <div style={{
+          background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
+          border: "1px solid #fecdd3",
+          borderRadius: 14, padding: "14px", marginBottom: 16,
+          display: "flex", alignItems: "flex-start", gap: 12,
+          position: "relative",
+        }}>
+          <button 
+            onClick={hideBanner}
+            style={{
+              position: "absolute", top: 10, right: 10, background: "transparent",
+              border: "none", color: "#f43f5e", cursor: "pointer", padding: 4
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          
+          <div style={{
+            width: 32, height: 32, borderRadius: 8, background: "#f43f5e", color: "#fff",
+            display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div style={{ paddingRight: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: "#be123c", marginBottom: 4 }}>Auto-Delete Scheduled</div>
+            <div style={{ fontSize: 12, color: "#9f1239", fontWeight: 500, lineHeight: 1.4 }}>
+              All orders will be deleted on <strong>{nextDeleteDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</strong>.
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginBottom: 12 }}>
         <SearchBar />
       </div>
       <SortFilterBar />
