@@ -57,6 +57,455 @@ const useIsDesktop = () => {
 };
 
 /* ─────────────────────────────────────────────
+   Mobile Filter Drawer
+───────────────────────────────────────────── */
+const MobileFilterDrawer = ({
+  isOpen,
+  onClose,
+  viewMode,
+  setViewMode,
+  sortOrder,
+  setSortOrder,
+  filterStatus,
+  setFilterStatus,
+}) => {
+  const drawerRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && drawerRef.current) {
+      gsap.fromTo(
+        drawerRef.current,
+        { y: "100%" },
+        { y: "0%", duration: 0.32, ease: "power3.out" },
+      );
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    if (drawerRef.current) {
+      gsap.to(drawerRef.current, {
+        y: "100%",
+        duration: 0.24,
+        ease: "power3.in",
+        onComplete: onClose,
+      });
+    } else {
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const VIEW_OPTIONS = [
+    { value: "grouped_salesman", label: "By Salesman", icon: "👤" },
+    { value: "grouped_status", label: "By Status", icon: "🏷️" },
+    { value: "flat", label: "Flat List", icon: "📋" },
+  ];
+  const SORT_OPTIONS = [
+    { value: "date_desc", label: "Newest First", icon: "↓" },
+    { value: "date_asc", label: "Oldest First", icon: "↑" },
+    { value: "party_asc", label: "Party A–Z", icon: "A" },
+  ];
+  const STATUS_OPTIONS = [
+    "all",
+    "pending",
+    "completed",
+    "partial",
+    "cancelled",
+  ];
+
+  const activeCount =
+    (viewMode !== "grouped_salesman" ? 1 : 0) +
+    (sortOrder !== "date_desc" ? 1 : 0) +
+    (filterStatus !== "all" ? 1 : 0);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={handleClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(15,23,42,0.45)",
+          zIndex: 998,
+          backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
+        }}
+      />
+
+      {/* Drawer */}
+      <div
+        ref={drawerRef}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 999,
+          background: "#ffffff",
+          borderRadius: "24px 24px 0 0",
+          padding: "0 0 32px",
+          boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
+          maxHeight: "82vh",
+          overflowY: "auto",
+          transform: "translateY(100%)",
+        }}
+      >
+        {/* Handle bar */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: 12,
+            paddingBottom: 4,
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 4,
+              borderRadius: 99,
+              background: "#e2e8f0",
+            }}
+          />
+        </div>
+
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 20px 16px",
+            borderBottom: "1px solid #f1f5f9",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 17,
+                fontWeight: 800,
+                color: "#0f172a",
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+              }}
+            >
+              Filters & View
+            </div>
+            {activeCount > 0 && (
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#6366f1",
+                  fontWeight: 600,
+                  marginTop: 1,
+                }}
+              >
+                {activeCount} filter{activeCount > 1 ? "s" : ""} active
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {activeCount > 0 && (
+              <button
+                onClick={() => {
+                  setViewMode("grouped_salesman");
+                  setSortOrder("date_desc");
+                  setFilterStatus("all");
+                }}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  border: "1.5px solid #e2e8f0",
+                  background: "#f8fafc",
+                  color: "#64748b",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  outline: "none",
+                }}
+              >
+                Reset
+              </button>
+            )}
+            <button
+              onClick={handleClose}
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                border: "1.5px solid #e2e8f0",
+                background: "#f8fafc",
+                color: "#64748b",
+                display: "grid",
+                placeItems: "center",
+                cursor: "pointer",
+                outline: "none",
+                flexShrink: 0,
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div style={{ padding: "20px 20px 0" }}>
+          {/* VIEW section */}
+          <div style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: "#94a3b8",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}
+            >
+              View As
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {VIEW_OPTIONS.map((opt) => {
+                const isActive = viewMode === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setViewMode(opt.value)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: `1.5px solid ${isActive ? "#c7d2fe" : "#f1f5f9"}`,
+                      background: isActive ? "#eef2ff" : "#fafbfc",
+                      cursor: "pointer",
+                      outline: "none",
+                      textAlign: "left",
+                      transition: "all 0.12s",
+                    }}
+                  >
+                    <span style={{ fontSize: 18, lineHeight: 1 }}>
+                      {opt.icon}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: isActive ? 700 : 500,
+                        color: isActive ? "#4338ca" : "#475569",
+                        flex: 1,
+                      }}
+                    >
+                      {opt.label}
+                    </span>
+                    {isActive && (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#6366f1"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SORT section */}
+          <div style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: "#94a3b8",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}
+            >
+              Sort By
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {SORT_OPTIONS.map((opt) => {
+                const isActive = sortOrder === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSortOrder(opt.value)}
+                    style={{
+                      flex: 1,
+                      padding: "10px 8px",
+                      borderRadius: 12,
+                      border: `1.5px solid ${isActive ? "#c7d2fe" : "#f1f5f9"}`,
+                      background: isActive ? "#eef2ff" : "#fafbfc",
+                      cursor: "pointer",
+                      outline: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 4,
+                      transition: "all 0.12s",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 900,
+                        color: isActive ? "#6366f1" : "#94a3b8",
+                      }}
+                    >
+                      {opt.icon}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: isActive ? 700 : 600,
+                        color: isActive ? "#4338ca" : "#64748b",
+                        textAlign: "center",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {opt.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* STATUS section */}
+          <div style={{ marginBottom: 8 }}>
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: "#94a3b8",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}
+            >
+              Status
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {STATUS_OPTIONS.map((s) => {
+                const sc =
+                  s === "all"
+                    ? {
+                        bg: "#eef2ff",
+                        text: "#4338ca",
+                        dot: "#6366f1",
+                        border: "#c7d2fe",
+                      }
+                    : getStatusConfig(s);
+                const isActive = filterStatus === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setFilterStatus(s)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "11px 14px",
+                      borderRadius: 12,
+                      border: `1.5px solid ${isActive ? sc.border : "#f1f5f9"}`,
+                      background: isActive ? sc.bg : "#fafbfc",
+                      cursor: "pointer",
+                      outline: "none",
+                      textAlign: "left",
+                      transition: "all 0.12s",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: isActive ? sc.dot : "#e2e8f0",
+                        flexShrink: 0,
+                        transition: "background 0.12s",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: isActive ? 700 : 500,
+                        color: isActive ? sc.text : "#475569",
+                        textTransform: "capitalize",
+                        flex: 1,
+                      }}
+                    >
+                      {s === "all" ? "All Orders" : s}
+                    </span>
+                    {isActive && (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke={sc.dot}
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Apply button */}
+        <div style={{ padding: "20px 20px 0" }}>
+          <button
+            onClick={handleClose}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: 14,
+              border: "none",
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 800,
+              cursor: "pointer",
+              outline: "none",
+              letterSpacing: "0.02em",
+              boxShadow: "0 4px 16px rgba(99,102,241,0.3)",
+            }}
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ─────────────────────────────────────────────
    Order Card
 ───────────────────────────────────────────── */
 const OrderCard = ({ order, isLatest }) => {
@@ -90,7 +539,6 @@ const OrderCard = ({ order, isLatest }) => {
         e.currentTarget.style.borderColor = isLatest ? "#c7d2fe" : "#f1f5f9";
       }}
     >
-      {/* Left accent bar */}
       <div
         style={{
           position: "absolute",
@@ -102,7 +550,6 @@ const OrderCard = ({ order, isLatest }) => {
           borderRadius: "14px 0 0 14px",
         }}
       />
-
       {isLatest && (
         <div
           style={{
@@ -122,7 +569,6 @@ const OrderCard = ({ order, isLatest }) => {
           NEW
         </div>
       )}
-
       <div
         style={{
           display: "flex",
@@ -133,8 +579,8 @@ const OrderCard = ({ order, isLatest }) => {
       >
         <div
           style={{
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             borderRadius: 10,
             flexShrink: 0,
             background: "#f1f5f9",
@@ -148,8 +594,6 @@ const OrderCard = ({ order, isLatest }) => {
             alt=""
           />
         </div>
-
-        {/* Text */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -160,7 +604,7 @@ const OrderCard = ({ order, isLatest }) => {
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              marginBottom: 3,
+              marginBottom: 4,
             }}
           >
             {order.partyName}
@@ -173,6 +617,8 @@ const OrderCard = ({ order, isLatest }) => {
               display: "flex",
               alignItems: "center",
               gap: 4,
+              flexWrap: "nowrap",
+              overflow: "hidden",
             }}
           >
             <svg
@@ -184,16 +630,23 @@ const OrderCard = ({ order, isLatest }) => {
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ flexShrink: 0 }}
             >
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            {dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
-            {" · "}
-            {dt.toLocaleTimeString("en-IN", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            <span style={{ whiteSpace: "nowrap" }}>
+              {dt.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+              })}
+              {" · "}
+              {dt.toLocaleTimeString("en-IN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </span>
             {order.images?.length > 0 && (
               <span
                 style={{
@@ -202,6 +655,7 @@ const OrderCard = ({ order, isLatest }) => {
                   alignItems: "center",
                   gap: 2,
                   color: "#cbd5e1",
+                  flexShrink: 0,
                 }}
               >
                 <svg
@@ -223,8 +677,6 @@ const OrderCard = ({ order, isLatest }) => {
             )}
           </div>
         </div>
-
-        {/* Status pill */}
         <div
           style={{
             padding: "4px 10px",
@@ -237,11 +689,11 @@ const OrderCard = ({ order, isLatest }) => {
             color: sc.text,
             border: `1px solid ${sc.border}`,
             flexShrink: 0,
+            whiteSpace: "nowrap",
           }}
         >
           {order.status}
         </div>
-
         <svg
           width="14"
           height="14"
@@ -261,9 +713,9 @@ const OrderCard = ({ order, isLatest }) => {
 };
 
 /* ─────────────────────────────────────────────
-   Stats bar
+   Stats Bar
 ───────────────────────────────────────────── */
-const StatsBar = ({ allOrders }) => {
+const StatsBar = ({ allOrders, isMobile }) => {
   const counts = useMemo(() => {
     if (!allOrders) return {};
     return allOrders.reduce((acc, o) => {
@@ -287,7 +739,7 @@ const StatsBar = ({ allOrders }) => {
       color: STATUS_CONFIG.pending.text,
     },
     {
-      label: "Completed",
+      label: isMobile ? "Done" : "Completed",
       value: counts.completed || 0,
       ...STATUS_CONFIG.completed,
       color: STATUS_CONFIG.completed.text,
@@ -299,12 +751,67 @@ const StatsBar = ({ allOrders }) => {
       color: STATUS_CONFIG.partial.text,
     },
     {
-      label: "Cancelled",
+      label: isMobile ? "Cancel" : "Cancelled",
       value: counts.cancelled || 0,
       ...STATUS_CONFIG.cancelled,
       color: STATUS_CONFIG.cancelled.text,
     },
   ];
+
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: 14,
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          paddingBottom: 2,
+        }}
+      >
+        {stats.map(({ label, value, color, bg, border }) => (
+          <div
+            key={label}
+            style={{
+              background: bg || "#fff",
+              borderRadius: 12,
+              border: `1px solid ${border || "#e2e8f0"}`,
+              padding: "10px 14px",
+              flexShrink: 0,
+              minWidth: 68,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 900,
+                color,
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                lineHeight: 1,
+                marginBottom: 4,
+              }}
+            >
+              {value}
+            </div>
+            <div
+              style={{
+                fontSize: 9,
+                color,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+                opacity: 0.75,
+              }}
+            >
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -356,22 +863,19 @@ const StatsBar = ({ allOrders }) => {
 };
 
 /* ─────────────────────────────────────────────
-   Custom Select
+   Custom Select (desktop only)
 ───────────────────────────────────────────── */
 const CustomSelect = ({ value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
-
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
-
   const selectedOption = options.find((o) => o.value === value) || options[0];
-
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
       <div
@@ -383,7 +887,7 @@ const CustomSelect = ({ value, onChange, options }) => {
           background: "#fff",
           border: `1.5px solid ${isOpen ? "#818cf8" : "#e2e8f0"}`,
           borderRadius: 10,
-          padding: "7px 12px",
+          padding: "8px 12px",
           cursor: "pointer",
           transition: "border-color 0.15s",
           boxShadow: isOpen ? "0 0 0 3px rgba(99,102,241,0.1)" : "none",
@@ -416,7 +920,6 @@ const CustomSelect = ({ value, onChange, options }) => {
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </div>
-
       {isOpen && (
         <div
           style={{
@@ -504,17 +1007,13 @@ const AdminOrderList = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode, setViewMode] = useState("grouped_salesman");
   const [sortOrder, setSortOrder] = useState("date_desc");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
-  // Banner State
   const [showDeleteBanner, setShowDeleteBanner] = useState(() => {
     const lastHidden = localStorage.getItem("hideDeleteBannerDate");
-    if (lastHidden) {
-      const today = new Date().toDateString();
-      if (lastHidden === today) return false;
-    }
+    if (lastHidden && lastHidden === new Date().toDateString()) return false;
     return true;
   });
-
   const hideBanner = () => {
     localStorage.setItem("hideDeleteBannerDate", new Date().toDateString());
     setShowDeleteBanner(false);
@@ -538,10 +1037,9 @@ const AdminOrderList = () => {
       const style = document.createElement("style");
       style.id = styleId;
       style.innerHTML = `
-        @keyframes dropdownIn {
-          from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
+        @keyframes dropdownIn { from { opacity:0; transform:translateY(-6px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+        ::-webkit-scrollbar { display:none; }
       `;
       document.head.appendChild(style);
     }
@@ -608,7 +1106,17 @@ const AdminOrderList = () => {
     return { type: "flat", data: filtered };
   }, [allOrders, filterStatus, sortOrder, viewMode]);
 
-  /* ── Sub-components ── */
+  const activeFilterCount =
+    (viewMode !== "grouped_salesman" ? 1 : 0) +
+    (sortOrder !== "date_desc" ? 1 : 0) +
+    (filterStatus !== "all" ? 1 : 0);
+
+  const nextDeleteDate = new Date(
+    new Date().getFullYear(),
+    new Date().getMonth() + 1,
+    0,
+  );
+
   const SearchBar = () => (
     <div style={{ position: "relative" }}>
       <svg
@@ -642,8 +1150,8 @@ const AdminOrderList = () => {
           width: "100%",
           paddingLeft: 42,
           paddingRight: 14,
-          paddingTop: 12,
-          paddingBottom: 12,
+          paddingTop: 11,
+          paddingBottom: 11,
           borderRadius: 12,
           border: "1.5px solid #e2e8f0",
           background: "#fff",
@@ -666,14 +1174,14 @@ const AdminOrderList = () => {
     </div>
   );
 
-  const SortFilterBar = () => (
+  const DesktopSortFilterBar = () => (
     <div
       style={{
         display: "flex",
+        flexDirection: "row",
         alignItems: "center",
-        flexWrap: "wrap",
         gap: 8,
-        marginBottom: 16,
+        marginBottom: 14,
         padding: "8px 12px",
         background: "#f8fafc",
         borderRadius: 12,
@@ -687,7 +1195,6 @@ const AdminOrderList = () => {
           color: "#94a3b8",
           letterSpacing: "0.1em",
           flexShrink: 0,
-          paddingRight: 2,
         }}
       >
         VIEW
@@ -717,7 +1224,6 @@ const AdminOrderList = () => {
           color: "#94a3b8",
           letterSpacing: "0.1em",
           flexShrink: 0,
-          paddingRight: 2,
         }}
       >
         SORT
@@ -739,7 +1245,6 @@ const AdminOrderList = () => {
       processedOrders.type === "flat"
         ? processedOrders.data.length === 0
         : Object.keys(processedOrders.data).length === 0;
-
     if (isEmpty) {
       return (
         <div
@@ -781,13 +1286,12 @@ const AdminOrderList = () => {
           </div>
           <div style={{ fontSize: 12, color: "#94a3b8" }}>
             {searchQuery
-              ? `Try searching something else`
+              ? "Try searching something else"
               : "Orders will appear here"}
           </div>
         </div>
       );
     }
-
     return (
       <div
         ref={listRef}
@@ -826,7 +1330,6 @@ const AdminOrderList = () => {
                   boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
                 }}
               >
-                {/* Group header */}
                 <div
                   style={{
                     display: "flex",
@@ -905,7 +1408,6 @@ const AdminOrderList = () => {
                       {orders.length} {orders.length === 1 ? "order" : "orders"}
                     </div>
                   </div>
-                  {/* Mini stats row for salesman groups */}
                   {viewMode === "grouped_salesman" &&
                     (() => {
                       const statuses = orders.reduce((a, o) => {
@@ -913,7 +1415,15 @@ const AdminOrderList = () => {
                         return a;
                       }, {});
                       return (
-                        <div style={{ display: "flex", gap: 6 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 6,
+                            flexWrap: isDesktop ? "nowrap" : "wrap",
+                            justifyContent: "flex-end",
+                            maxWidth: isDesktop ? "none" : 110,
+                          }}
+                        >
                           {Object.entries(statuses).map(([s, c]) => {
                             const st = getStatusConfig(s);
                             return (
@@ -928,6 +1438,7 @@ const AdminOrderList = () => {
                                   fontWeight: 700,
                                   border: `1px solid ${st.border}`,
                                   textTransform: "capitalize",
+                                  whiteSpace: "nowrap",
                                 }}
                               >
                                 {s} · {c}
@@ -938,8 +1449,6 @@ const AdminOrderList = () => {
                       );
                     })()}
                 </div>
-
-                {/* Cards */}
                 <div
                   style={{
                     padding: 12,
@@ -976,48 +1485,106 @@ const AdminOrderList = () => {
       "partial",
       "cancelled",
     ];
-    
-    // Calculate last day of the month
-    const nextDeleteDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-
     return (
       <div style={{ width: "100%", padding: "0 0 48px" }}>
-        {/* Deletion Warning Banner */}
         {showDeleteBanner && (
-          <div style={{
-            background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
-            border: "1px solid #fecdd3",
-            borderRadius: 12, padding: "12px 16px", marginBottom: 16,
-            display: "flex", alignItems: "center", gap: 12,
-            boxShadow: "0 2px 8px rgba(225,29,72,0.04)",
-            position: "relative"
-          }}>
-            <button 
+          <div
+            style={{
+              background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
+              border: "1px solid #fecdd3",
+              borderRadius: 12,
+              padding: "12px 16px",
+              marginBottom: 16,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              boxShadow: "0 2px 8px rgba(225,29,72,0.04)",
+              position: "relative",
+            }}
+          >
+            <button
               onClick={hideBanner}
               style={{
-                position: "absolute", top: 12, right: 12, background: "transparent",
-                border: "none", color: "#f43f5e", cursor: "pointer", padding: 4
+                position: "absolute",
+                top: 12,
+                right: 12,
+                background: "transparent",
+                border: "none",
+                color: "#f43f5e",
+                cursor: "pointer",
+                padding: 4,
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8, background: "#f43f5e", color: "#fff",
-              display: "grid", placeItems: "center", flexShrink: 0
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "#f43f5e",
+                color: "#fff",
+                display: "grid",
+                placeItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
             </div>
             <div style={{ flex: 1, paddingRight: 30 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#be123c", marginBottom: 2 }}>System Auto-Cleanup Notice</div>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: "#be123c",
+                  marginBottom: 2,
+                }}
+              >
+                System Auto-Cleanup Notice
+              </div>
               <div style={{ fontSize: 12, color: "#9f1239", fontWeight: 500 }}>
-                All orders and attached images will be permanently deleted on <strong>{nextDeleteDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} at 11:55 PM</strong>.
+                All orders and attached images will be permanently deleted on{" "}
+                <strong>
+                  {nextDeleteDate.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}{" "}
+                  at 11:55 PM
+                </strong>
+                .
               </div>
             </div>
           </div>
         )}
 
         {!loading && allOrders?.length > 0 && (
-          <StatsBar allOrders={allOrders} />
+          <StatsBar allOrders={allOrders} isMobile={false} />
         )}
 
         <div
@@ -1059,6 +1626,7 @@ const AdminOrderList = () => {
                     cursor: "pointer",
                     transition: "all 0.12s",
                     whiteSpace: "nowrap",
+                    outline: "none",
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -1080,7 +1648,7 @@ const AdminOrderList = () => {
           </div>
         </div>
 
-        <SortFilterBar />
+        <DesktopSortFilterBar />
 
         {loading && (!allOrders || allOrders.length === 0) ? (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
@@ -1122,63 +1690,240 @@ const AdminOrderList = () => {
   }
 
   /* ── MOBILE ── */
-  const nextDeleteDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-  
   return (
     <div style={{ width: "100%", padding: "0 0 40px" }}>
-      {/* Deletion Warning Banner */}
+      {/* Delete banner */}
       {showDeleteBanner && (
-        <div style={{
-          background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
-          border: "1px solid #fecdd3",
-          borderRadius: 14, padding: "14px", marginBottom: 16,
-          display: "flex", alignItems: "flex-start", gap: 12,
-          position: "relative",
-        }}>
-          <button 
+        <div
+          style={{
+            background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
+            border: "1px solid #fecdd3",
+            borderRadius: 14,
+            padding: "12px 14px",
+            marginBottom: 14,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            position: "relative",
+          }}
+        >
+          <button
             onClick={hideBanner}
             style={{
-              position: "absolute", top: 10, right: 10, background: "transparent",
-              border: "none", color: "#f43f5e", cursor: "pointer", padding: 4
+              position: "absolute",
+              top: 10,
+              right: 10,
+              background: "transparent",
+              border: "none",
+              color: "#f43f5e",
+              cursor: "pointer",
+              padding: 4,
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
-          
-          <div style={{
-            width: 32, height: 32, borderRadius: 8, background: "#f43f5e", color: "#fff",
-            display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
+              background: "#f43f5e",
+              color: "#fff",
+              display: "grid",
+              placeItems: "center",
+              flexShrink: 0,
+              marginTop: 1,
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
           </div>
           <div style={{ paddingRight: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#be123c", marginBottom: 4 }}>Auto-Delete Scheduled</div>
-            <div style={{ fontSize: 12, color: "#9f1239", fontWeight: 500, lineHeight: 1.4 }}>
-              All orders will be deleted on <strong>{nextDeleteDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</strong>.
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: "#be123c",
+                marginBottom: 3,
+              }}
+            >
+              Auto-Delete Scheduled
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: "#9f1239",
+                fontWeight: 500,
+                lineHeight: 1.4,
+              }}
+            >
+              All orders deleted on{" "}
+              <strong>
+                {nextDeleteDate.toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </strong>{" "}
+              at 11:55 PM.
             </div>
           </div>
         </div>
       )}
 
-      <div style={{ marginBottom: 12 }}>
-        <SearchBar />
+      {/* Stats */}
+      {!loading && allOrders?.length > 0 && (
+        <StatsBar allOrders={allOrders} isMobile={true} />
+      )}
+
+      {/* Search + Filter button */}
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          marginBottom: 14,
+          alignItems: "center",
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <SearchBar />
+        </div>
+        <button
+          onClick={() => setFilterDrawerOpen(true)}
+          style={{
+            position: "relative",
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            border:
+              activeFilterCount > 0
+                ? "1.5px solid #c7d2fe"
+                : "1.5px solid #e2e8f0",
+            background: activeFilterCount > 0 ? "#eef2ff" : "#fff",
+            color: activeFilterCount > 0 ? "#6366f1" : "#64748b",
+            display: "grid",
+            placeItems: "center",
+            cursor: "pointer",
+            outline: "none",
+            flexShrink: 0,
+            transition: "all 0.15s",
+            boxShadow:
+              activeFilterCount > 0 ? "0 0 0 3px rgba(99,102,241,0.1)" : "none",
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+            <line
+              x1="12"
+              y1="18"
+              x2="12"
+              y2="18"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+          {activeFilterCount > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -5,
+                width: 17,
+                height: 17,
+                borderRadius: "50%",
+                background: "#6366f1",
+                color: "#fff",
+                fontSize: 9,
+                fontWeight: 900,
+                display: "grid",
+                placeItems: "center",
+                border: "2px solid #fff",
+              }}
+            >
+              {activeFilterCount}
+            </div>
+          )}
+        </button>
       </div>
-      <SortFilterBar />
+
       {loading && (!allOrders || allOrders.length === 0) ? (
         <div
           style={{
-            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
             padding: "60px 20px",
             color: "#94a3b8",
             fontWeight: 600,
             fontSize: 13,
           }}
         >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ animation: "spin 1s linear infinite" }}
+          >
+            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity="0.3" />
+            <path d="M21 12a9 9 0 00-9-9" />
+          </svg>
           Loading orders…
         </div>
       ) : (
         <OrderGrid />
       )}
+
+      {/* Filter Drawer */}
+      <MobileFilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+      />
     </div>
   );
 };

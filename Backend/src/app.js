@@ -6,7 +6,6 @@ import router from "./routes/upload.route.js";
 import getStockRouter from "./routes/getStock.route.js";
 import salesOrderRouter from "./routes/salesOrder.route.js";
 import adminRouter from "./routes/admin.routes.js";
-import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
 import { initCronJobs } from "./services/cron.service.js";
@@ -32,9 +31,8 @@ app.use(
       "http://13.205.77.25",
     ],
     credentials: true,
-  })
+  }),
 );
-app.use(morgan("dev"));
 
 app.use("/api/auth", authRouter);
 app.use("/api/upload", router);

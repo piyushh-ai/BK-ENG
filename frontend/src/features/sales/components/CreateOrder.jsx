@@ -14,6 +14,7 @@ const CreateOrder = ({ onSuccess }) => {
   const [images, setImages] = useState([]); // { file, preview }[]
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [compressing, setCompressing] = useState(false);
 
   const cardRef   = useRef(null);
   const formRef   = useRef(null);
@@ -34,10 +35,72 @@ const CreateOrder = ({ onSuccess }) => {
       .to(els, { opacity: 1, y: 0, duration: 0.4, stagger: 0.07 });
   }, []);
 
-  const handleImagePick = (e) => {
+  useEffect(() => {
+    if (success && successRef.current) {
+      gsap.fromTo(
+        successRef.current,
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.7)" }
+      );
+    }
+  }, [success]);
+
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1000;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+              const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(newFile);
+            },
+            "image/jpeg",
+            0.7
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImagePick = async (e) => {
     const files = Array.from(e.target.files || []);
     const remaining = MAX_IMAGES - images.length;
-    const toAdd = files.slice(0, remaining).map((file) => ({
+    const toProcess = files.slice(0, remaining);
+    if (toProcess.length === 0) return;
+
+    setCompressing(true);
+    const compressedFiles = await Promise.all(toProcess.map(compressImage));
+    setCompressing(false);
+
+    const toAdd = compressedFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
     }));
@@ -82,11 +145,6 @@ const CreateOrder = ({ onSuccess }) => {
       await createOrder(fd);
       // Success flash
       setSuccess(true);
-      gsap.fromTo(
-        successRef.current,
-        { scale: 0.85, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.7)" }
-      );
       setTimeout(() => {
         setPartyName("");
         setDescription("");
@@ -414,11 +472,11 @@ const CreateOrder = ({ onSuccess }) => {
           </div>
 
           <div ref={btnRef} style={{ opacity: 0 }}>
-            <button className="co-btn" type="submit" disabled={orderLoading}>
-              {orderLoading ? (
+            <button className="co-btn" type="submit" disabled={orderLoading || compressing}>
+              {orderLoading || compressing ? (
                 <>
                   <span style={{ fontSize: 16, animation: "spin 1s linear infinite" }}>⏳</span>
-                  Submitting…
+                  {compressing ? "Processing…" : "Submitting…"}
                 </>
               ) : (
                 <>Submit Order →</>
