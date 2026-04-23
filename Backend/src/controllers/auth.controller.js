@@ -14,16 +14,16 @@ const transporter = nodemailer.createTransport({
 
 const generateToken = (id, res, message, user) => {
   const token = jwt.sign({ id }, config.jwt_secret, { expiresIn: "7d" });
+  const isProd = process.env.NODE_ENV === "production";
 
   res.cookie("token", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   // Also return token in body so React Native WebView can save it to AsyncStorage
-  // for session restoration after app is killed by the OS.
-  res.status(201).json({ message: message, user, token });
+  res.status(201).json({ message, user, token });
 };
 
 export const register = async (req, res) => {

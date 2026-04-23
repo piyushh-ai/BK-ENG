@@ -10,7 +10,7 @@ import Pagination from "../components/Pagination";
 import OverviewSection from "../components/OverviewSection";
 import SheetBar from "../components/SheetBar";
 
-import { getCompanySheets, getCompanyStock, getBoschStock, masterSearch } from "../services/sales.api";
+import { getCompanySheets, getCompanyStock, getBoschStock, masterSearch, normalizeError } from "../services/sales.api";
 
 function useDebounce(value, delay = 380) {
   const [debounced, setDebounced] = useState(value);
@@ -45,6 +45,7 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
   const [masterResults, setMasterResults] = useState([]);
   const [masterLoading, setMasterLoading] = useState(false);
   const [mobileView, setMobileView] = useState("grid");
+  const [networkError, setNetworkError] = useState("");
 
   const sheetParam = searchParams.get("sheet");
   const selectedSheet = sheetParam
@@ -53,44 +54,61 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
 
   useEffect(() => {
     if (!debouncedMaster.trim()) { setMasterResults([]); return; }
+    const ctrl = new AbortController();
     const run = async () => {
       setMasterLoading(true);
-      try { const d = await masterSearch({ search: debouncedMaster, limit: 12 }); setMasterResults(d.results || []); }
-      catch (e) { console.error(e); }
-      finally { setMasterLoading(false); }
+      try {
+        const d = await masterSearch({ search: debouncedMaster, limit: 12 }, ctrl.signal);
+        setMasterResults(d.results || []);
+      } catch (e) {
+        if (e?.name !== "CanceledError" && e?.name !== "AbortError") console.error(e);
+      } finally { setMasterLoading(false); }
     };
     run();
+    return () => ctrl.abort();
   }, [debouncedMaster]);
 
   useEffect(() => {
+    const ctrl = new AbortController();
     const load = async () => {
       setSheetsLoading(true);
-      try { const d = await getCompanySheets(); setSheets(d.companySheets || []); }
-      catch (e) { console.error(e); }
-      finally { setSheetsLoading(false); }
+      try {
+        const d = await getCompanySheets(ctrl.signal);
+        setSheets(d.companySheets || []);
+      } catch (e) {
+        if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
+          setNetworkError(normalizeError(e));
+        }
+      } finally { setSheetsLoading(false); }
     };
     load();
+    return () => ctrl.abort();
   }, []);
 
   useEffect(() => { setPage(1); }, [debouncedSearch, selectedSheet, activeTab]);
 
   useEffect(() => {
     if (activeTab !== "company" && activeTab !== "bosch") { setStockLoading(false); return; }
+    const ctrl = new AbortController();
     const load = async () => {
-      setStockLoading(true); setStock([]);
+      setStockLoading(true); setStock([]); setNetworkError("");
       try {
         let data;
         if (activeTab === "company" && selectedSheet) {
           const sn = typeof selectedSheet === "string" ? selectedSheet : selectedSheet.sheetName;
-          data = await getCompanyStock(sn, { page, limit: LIMIT, search: debouncedSearch });
+          data = await getCompanyStock(sn, { page, limit: LIMIT, search: debouncedSearch }, ctrl.signal);
         } else if (activeTab === "bosch") {
-          data = await getBoschStock({ page, limit: LIMIT, search: debouncedSearch });
+          data = await getBoschStock({ page, limit: LIMIT, search: debouncedSearch }, ctrl.signal);
         }
         if (data) { setStock(data.boschStock || data.companyStock || []); setPagination(data.pagination || null); }
-      } catch (e) { console.error(e); }
-      finally { setStockLoading(false); }
+      } catch (e) {
+        if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
+          setNetworkError(normalizeError(e));
+        }
+      } finally { setStockLoading(false); }
     };
     load();
+    return () => ctrl.abort();
   }, [activeTab, selectedSheet, page, debouncedSearch]);
 
   const handleTabChange = useCallback((t) => {
@@ -227,10 +245,31 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
           .sd-logo-img{height:28px;max-width:70px;}
         }
         @media(max-width:400px){.sd-grid{grid-template-columns:1fr;}}
+        .sd-net-error{
+          display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+          padding:12px 20px;background:#fef3c7;border-bottom:1.5px solid #f59e0b;
+          font-family:'DM Sans',sans-serif;font-size:13.5px;color:#92400e;font-weight:500;
+        }
+        :root[data-theme="dark"] .sd-net-error{background:#2d1a00;border-color:#78350f;color:#fde68a;}
+        .sd-net-reload{
+          padding:6px 16px;background:#f59e0b;color:#fff;border:none;border-radius:8px;
+          font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;
+          white-space:nowrap;transition:opacity 0.15s;
+        }
+        .sd-net-reload:hover{opacity:0.88;}
       `}</style>
 
       <div className="sd-root" style={hideNavbar ? { minHeight: "auto" } : {}}>
         {!hideNavbar && <SalesNavbar activeTab={activeTab} onTabChange={handleTabChange} />}
+
+        {networkError && (
+          <div className="sd-net-error" role="alert">
+            <span>⚠️ {networkError}</span>
+            <button className="sd-net-reload" onClick={() => window.location.reload()}>
+              Reload Page
+            </button>
+          </div>
+        )}
 
         <div className="sd-content">
           {activeTab !== "overview" && activeTab !== "settings" && (

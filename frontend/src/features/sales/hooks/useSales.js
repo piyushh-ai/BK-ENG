@@ -8,6 +8,7 @@ import {
   getOrderById as getOrderByIdApi,
   searchOrders as searchOrdersApi,
   deleteOrder as deleteOrderApi,
+  normalizeError,
 } from "../services/sales.api";
 import {
   setBoschStock,
@@ -29,37 +30,40 @@ export const useSales = () => {
 
   // ── Stock fetchers ──────────────────────────────────────────────────
 
-  const fetchCompanySheets = async () => {
+  const fetchCompanySheets = async (signal) => {
     try {
       dispatch(setLoading(true));
-      const response = await getCompanySheets();
+      const response = await getCompanySheets(signal);
       dispatch(setCompanySheets(response.companySheets || []));
     } catch (error) {
-      dispatch(setError(error?.response?.data?.message || error.message));
+      if (error?.name === "CanceledError" || error?.name === "AbortError") return;
+      dispatch(setError(normalizeError(error)));
     } finally {
       dispatch(setLoading(false));
     }
   };
 
-  const fetchCompanyStock = async (sheetName, params) => {
+  const fetchCompanyStock = async (sheetName, params, signal) => {
     try {
       dispatch(setLoading(true));
-      const response = await getCompanyStock(sheetName, params);
+      const response = await getCompanyStock(sheetName, params, signal);
       dispatch(setCompanyStock(response.companyStock || []));
     } catch (error) {
-      dispatch(setError(error?.response?.data?.message || error.message));
+      if (error?.name === "CanceledError" || error?.name === "AbortError") return;
+      dispatch(setError(normalizeError(error)));
     } finally {
       dispatch(setLoading(false));
     }
   };
 
-  const fetchBoschStock = async (params) => {
+  const fetchBoschStock = async (params, signal) => {
     try {
       dispatch(setLoading(true));
-      const response = await getBoschStock(params);
+      const response = await getBoschStock(params, signal);
       dispatch(setBoschStock(response.boschStock || []));
     } catch (error) {
-      dispatch(setError(error?.response?.data?.message || error.message));
+      if (error?.name === "CanceledError" || error?.name === "AbortError") return;
+      dispatch(setError(normalizeError(error)));
     } finally {
       dispatch(setLoading(false));
     }
@@ -68,19 +72,26 @@ export const useSales = () => {
   // ── Order hooks ─────────────────────────────────────────────────────
 
   /**
-   * Create a new sales order
+   * Create a new sales order.
    * @param {FormData} formData
+   * @param {Function} [onUploadProgress]  — (percent: number) => void
    * @returns {object} created order
    */
-  const createOrder = async (formData) => {
+  const createOrder = async (formData, onUploadProgress) => {
     dispatch(setOrderLoading(true));
     try {
-      const data = await createOrderApi(formData);
+      const progressCb = onUploadProgress
+        ? (e) => {
+            if (e.total) onUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        : undefined;
+
+      const data = await createOrderApi(formData, progressCb);
       // Optimistically prepend to list — no re-fetch needed
       dispatch(prependOrder(data.order));
       return data;
     } catch (error) {
-      const msg = error?.response?.data?.message || error.message;
+      const msg = normalizeError(error);
       dispatch(setError(msg));
       throw new Error(msg);
     } finally {
@@ -89,32 +100,34 @@ export const useSales = () => {
   };
 
   /**
-   * Fetch logged-in user's orders (replaces list)
+   * Fetch logged-in user's orders (replaces list).
    */
-  const fetchMyOrders = async ({ page = 1, limit = 10 } = {}) => {
+  const fetchMyOrders = async ({ page = 1, limit = 10 } = {}, signal) => {
     dispatch(setOrderLoading(true));
     try {
-      const data = await getMyOrdersApi({ page, limit });
+      const data = await getMyOrdersApi({ page, limit }, signal);
       dispatch(setMyOrders(data.orders || []));
       dispatch(setOrdersPagination(data.pagination || null));
     } catch (error) {
-      dispatch(setError(error?.response?.data?.message || error.message));
+      if (error?.name === "CanceledError" || error?.name === "AbortError") return;
+      dispatch(setError(normalizeError(error)));
     } finally {
       dispatch(setOrderLoading(false));
     }
   };
 
   /**
-   * Fetch single order detail
+   * Fetch single order detail.
    */
-  const fetchOrderById = async (id) => {
+  const fetchOrderById = async (id, signal) => {
     dispatch(setOrderLoading(true));
     try {
-      const data = await getOrderByIdApi(id);
+      const data = await getOrderByIdApi(id, signal);
       dispatch(setActiveOrder(data.order));
       return data.order;
     } catch (error) {
-      const msg = error?.response?.data?.message || error.message;
+      if (error?.name === "CanceledError" || error?.name === "AbortError") return;
+      const msg = normalizeError(error);
       dispatch(setError(msg));
       throw new Error(msg);
     } finally {
@@ -123,22 +136,23 @@ export const useSales = () => {
   };
 
   /**
-   * Search orders by party name
+   * Search orders by party name.
    */
-  const searchOrders = async (q) => {
+  const searchOrders = async (q, signal) => {
     dispatch(setOrderLoading(true));
     try {
-      const data = await searchOrdersApi(q);
+      const data = await searchOrdersApi(q, signal);
       dispatch(setSearchResults(data.orders || []));
     } catch (error) {
-      dispatch(setError(error?.response?.data?.message || error.message));
+      if (error?.name === "CanceledError" || error?.name === "AbortError") return;
+      dispatch(setError(normalizeError(error)));
     } finally {
       dispatch(setOrderLoading(false));
     }
   };
 
   /**
-   * Delete own order (only pending)
+   * Delete own order (only pending).
    * @returns boolean — true if deleted
    */
   const deleteOrder = async (id) => {
@@ -149,7 +163,7 @@ export const useSales = () => {
       dispatch(removeOrder(id));
       return true;
     } catch (error) {
-      const msg = error?.response?.data?.message || error.message;
+      const msg = normalizeError(error);
       dispatch(setError(msg));
       throw new Error(msg);
     } finally {

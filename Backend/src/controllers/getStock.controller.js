@@ -44,9 +44,10 @@ export const getBoschStock = async (req, res) => {
     const [boschStock, totalDocuments] = await Promise.all([
       boschStockModel
         .find(query)
-        .sort({ updatedAt: -1 }) // Sort by latest updated
+        .sort({ updatedAt: -1 })
         .skip(startIndex)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       boschStockModel.countDocuments(query),
     ]);
 
@@ -109,7 +110,8 @@ export const getCompanyStock = async (req, res) => {
         .find(query)
         .sort({ updatedAt: -1 })
         .skip(startIndex)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       companyStockModel.countDocuments(query),
     ]);
 

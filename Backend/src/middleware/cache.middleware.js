@@ -13,7 +13,6 @@ export const cacheMiddleware = (ttl) => (req, res, next) => {
 
   const cached = cache.get(key);
   if (cached !== undefined) {
-    console.log(`[Cache] HIT — ${key}`);
     return res.json(cached);
   }
 
@@ -22,7 +21,6 @@ export const cacheMiddleware = (ttl) => (req, res, next) => {
   res.json = (data) => {
     if (res.statusCode === 200) {
       cache.set(key, data, ttl ?? cache.options.stdTTL);
-      console.log(`[Cache] MISS (stored) — ${key}`);
     }
     return originalJson(data);
   };

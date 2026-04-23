@@ -71,17 +71,20 @@ export const createOrder = async (req, res) => {
       // status defaults to "pending" via schema
     });
 
-    // ── Send Push Notification to Admins ──────────────────────
-    try {
-      const admins = await userModel.find({ role: "admin", fcmToken: { $ne: null } }).select("fcmToken");
-      const tokens = admins.map((a) => a.fcmToken).filter(Boolean);
-      if (tokens.length > 0) {
-        // Run asynchronously so it doesn't block the request response
-        sendNewOrderNotification(tokens, order, req.user.name);
+    // ── Send Push Notification to Admins (true fire-and-forget) ──────────────
+    // Do NOT await — return the response immediately after DB write.
+    setImmediate(async () => {
+      try {
+        const admins = await userModel
+          .find({ role: "admin", fcmToken: { $ne: null } })
+          .select("fcmToken")
+          .lean();
+        const tokens = admins.map((a) => a.fcmToken).filter(Boolean);
+        if (tokens.length > 0) sendNewOrderNotification(tokens, order, req.user.name);
+      } catch (notifErr) {
+        console.error("Notification dispatch error:", notifErr.message);
       }
-    } catch (notifErr) {
-      console.error("Error triggering notification:", notifErr);
-    }
+    });
 
     return res.status(201).json({
       message: "Sales order created successfully",

@@ -1,5 +1,4 @@
-import React, { useRef, useEffect } from "react";
-import { gsap } from "gsap";
+import React from "react";
 
 const STOCK = {
   out:  { label: "Out of Stock", color: "#DC2626", bg: "rgba(220,38,38,0.07)",  border: "rgba(220,38,38,0.18)",  dot: "#DC2626", strip: "#DC2626" },
@@ -31,21 +30,10 @@ const formatDate = (dateStr) => {
 };
 
 const ProductCard = React.memo(({ item }) => {
-  const cardRef = useRef(null);
-
   const level = getLevel(item.quantity);
   const sc = STOCK[level];
   const hasMrp = item.mrp !== undefined && item.mrp !== null && item.mrp !== "";
   const lastUpdated = formatDate(item.updatedAt || item.lastUpdated || item.updated_at);
-
-  useEffect(() => {
-    gsap.fromTo(
-      cardRef.current,
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.42, ease: "power3.out",
-        onComplete: () => gsap.set(cardRef.current, { clearProps: "transform" }) }
-    );
-  }, []);
 
   return (
     <>
@@ -65,8 +53,9 @@ const ProductCard = React.memo(({ item }) => {
           box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
           transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
           cursor: default;
-          will-change: transform;
+          animation: pc2FadeUp 0.35s ease both;
         }
+        @keyframes pc2FadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
         .pc2-card:hover {
           box-shadow: 0 8px 24px rgba(0,0,0,0.10);
           border-color: #D1D5DB;
@@ -233,7 +222,7 @@ const ProductCard = React.memo(({ item }) => {
         }
       `}</style>
 
-      <div className="pc2-card" ref={cardRef}>
+      <div className="pc2-card">
 
         {/* Colored status strip at top */}
         <div className="pc2-strip" style={{ background: sc.strip }} />

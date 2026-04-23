@@ -8,18 +8,21 @@ const storage = new CloudinaryStorage({
     return {
       folder: "BK-ENG/salesOrder",
 
-      // unique file name (important)
-      public_id: `${Date.now()}-${file.originalname}`,
+      // Unique file name
+      public_id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
 
-      // allowed formats
+      // Allowed formats
       allowed_formats: ["jpg", "png", "jpeg", "webp"],
 
-      // auto optimization (UX boost)
+      // Single lightweight transformation on upload — no eager variants needed.
+      // The client already compresses to 900px / 72% quality before sending,
+      // so we just set a generous ceiling here to catch large originals.
       transformation: [
         {
-          width: 1000,
+          width: 1200,
           crop: "limit",
-          quality: "auto",
+          quality: "auto:good", // Cloudinary's smart quality — faster than "auto"
+          fetch_format: "auto",  // Serve webp/avif automatically
         },
       ],
     };
@@ -29,8 +32,8 @@ const storage = new CloudinaryStorage({
 const upload = multer({
   storage,
 
-  // optional: file size limit (2MB example)
-  limits: { fileSize: 10 * 1024 * 1024 },
+  // 8 MB per file (client already compressed, 10 MB was overkill)
+  limits: { fileSize: 8 * 1024 * 1024 },
 
   fileFilter: (req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "image/webp"];

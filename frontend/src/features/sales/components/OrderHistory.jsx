@@ -94,7 +94,7 @@ const ImageModal = ({ isOpen, onClose, imageUrl }) => {
   );
 };
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, orderName, loading }) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, orderName, loading, error }) => {
   const overlayRef = useRef(null);
   const modalRef = useRef(null);
 
@@ -115,6 +115,11 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, orderName, loading }) => {
         <p className="oh-modal-text">
           Are you sure you want to delete the order for <strong>{orderName}</strong>? This action cannot be undone.
         </p>
+        {error && (
+          <div style={{ fontSize: "12.5px", color: "#ba1a1a", background: "#ffdad6", border: "1px solid #ba1a1a", borderRadius: "8px", padding: "8px 12px", marginBottom: "12px", textAlign: "left" }}>
+            {error}
+          </div>
+        )}
         <div className="oh-modal-actions">
           <button className="oh-btn-cancel" onClick={onClose} disabled={loading}>Cancel</button>
           <button className="oh-btn-danger" onClick={onConfirm} disabled={loading}>
@@ -232,7 +237,7 @@ const OrderCard = ({ order, isLatest, onDeleteRequest, onClickDetail, onImageCli
         <div className="oh-thumbs">
           {order.images.slice(0, 4).map((img, i) => (
             <div key={i} className="oh-thumb-wrapper" onClick={(e) => { e.stopPropagation(); onImageClick(img.url); }}>
-              <img src={img.url} alt={`order-img-${i}`} className="oh-thumb" />
+              <img src={img.url} alt={`order-img-${i}`} className="oh-thumb" loading="lazy" />
             </div>
           ))}
           {order.images.length > 4 && (
@@ -268,8 +273,9 @@ const OrderHistory = () => {
   const { myOrders, ordersPagination, orderLoading, searchResults } = useSelector((s) => s.sales);
 
   const [query, setQuery]         = useState("");
-  const [isSearching, setSearch]  = useState(false); // are we in search mode?
+  const [isSearching, setSearch]  = useState(false);
   const [page, setPage]           = useState(1);
+  const [deleteError, setDeleteError] = useState("");
 
   // Modal states
   const [detailOrder, setDetailOrder] = useState(null);
@@ -300,27 +306,29 @@ const OrderHistory = () => {
 
   // ── Initial load ────────────────────────────────────────────
   useEffect(() => {
-    fetchMyOrders({ page, limit: 10 });
+    const ctrl = new AbortController();
+    fetchMyOrders({ page, limit: 10 }, ctrl.signal);
+    return () => ctrl.abort();
   }, [page]);
 
   // ── Debounced search ────────────────────────────────────────
   useEffect(() => {
-    if (debouncedQuery.trim()) {
-      setSearch(true);
-      searchOrders(debouncedQuery.trim());
-    } else {
-      setSearch(false);
-    }
+    if (!debouncedQuery.trim()) { setSearch(false); return; }
+    const ctrl = new AbortController();
+    setSearch(true);
+    searchOrders(debouncedQuery.trim(), ctrl.signal);
+    return () => ctrl.abort();
   }, [debouncedQuery]);
 
   const confirmDelete = async () => {
     if (!deleteConfirmTarget) return;
     setIsDeleting(true);
+    setDeleteError("");
     try {
       await deleteOrder(deleteConfirmTarget._id);
       setDeleteConfirmTarget(null);
     } catch (e) {
-      alert(e.message);
+      setDeleteError(e.message);
     } finally {
       setIsDeleting(false);
     }
@@ -1028,10 +1036,11 @@ const OrderHistory = () => {
       {/* Modals placed outside main flow */}
       <ConfirmModal 
         isOpen={!!deleteConfirmTarget} 
-        onClose={() => setDeleteConfirmTarget(null)} 
+        onClose={() => { setDeleteConfirmTarget(null); setDeleteError(""); }} 
         onConfirm={confirmDelete} 
         orderName={deleteConfirmTarget?.partyName}
         loading={isDeleting}
+        error={deleteError}
       />
 
       <DetailModal 
