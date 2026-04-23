@@ -226,19 +226,33 @@ const ImageViewer = ({ isOpen, onClose, images, startIndex }) => {
 };
 
 /* ─────────────────────────────────────────────
+   Delete Confirm Modal
+───────────────────────────────────────────── */
+const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, isDeleting }) => {
+  if (!isOpen) return null;
+  return createPortal(
+    <div style={{ position:"fixed",inset:0,zIndex:99999,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)",animation:"aodOverlay 0.2s ease" }}>
+      <div style={{ width:"100%",maxWidth:480,background:"var(--color-surface-container-lowest)",borderRadius:"24px 24px 0 0",padding:"24px 20px calc(24px + env(safe-area-inset-bottom,0px))",boxShadow:"0 -8px 40px rgba(0,0,0,0.2)" }}>
+        <div style={{ width:36,height:4,borderRadius:2,background:"var(--color-outline-variant)",margin:"0 auto 20px" }} />
+        <div style={{ fontSize:22,textAlign:"center",marginBottom:8 }}>🗑️</div>
+        <div style={{ fontSize:18,fontWeight:800,color:"var(--color-on-surface)",textAlign:"center",fontFamily:"'Bricolage Grotesque',sans-serif",marginBottom:6 }}>Delete Order?</div>
+        <div style={{ fontSize:13,color:"var(--color-on-surface-variant)",textAlign:"center",marginBottom:24,lineHeight:1.5 }}>This action is permanent and cannot be undone.</div>
+        <button onClick={onConfirm} disabled={isDeleting} style={{ width:"100%",padding:"14px",borderRadius:14,border:"none",background:"#dc2626",color:"#fff",fontSize:15,fontWeight:800,cursor:isDeleting?"not-allowed":"pointer",opacity:isDeleting?0.6:1,fontFamily:"'Bricolage Grotesque',sans-serif",marginBottom:10,transition:"opacity 0.2s" }}>
+          {isDeleting ? "Deleting…" : "Yes, Delete"}
+        </button>
+        <button onClick={onCancel} style={{ width:"100%",padding:"14px",borderRadius:14,border:"1.5px solid var(--color-outline-variant)",background:"var(--color-surface-container)",color:"var(--color-on-surface)",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif" }}>Cancel</button>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+/* ─────────────────────────────────────────────
    Section wrapper
 ───────────────────────────────────────────── */
 const Section = ({ label, children, noBorder }) => (
-  <div style={{
-    padding: "14px 16px",
-    borderBottom: noBorder ? "none" : "1px solid #f3f4f6",
-  }}>
-    <div style={{
-      fontSize: 10, fontWeight: 800, color: "#9ca3af",
-      textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8,
-    }}>
-      {label}
-    </div>
+  <div style={{ padding:"14px 16px", borderBottom: noBorder?"none":"1px solid var(--color-outline-variant)" }}>
+    <div style={{ fontSize:10,fontWeight:800,color:"var(--color-outline)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8,fontFamily:"'DM Sans',sans-serif" }}>{label}</div>
     {children}
   </div>
 );
@@ -253,27 +267,13 @@ const InfoBlock = ({ order, isDesktop, onImageClick }) => {
     <>
       {/* Party Info */}
       <Section label="Party info">
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: "50%",
-            border: "2px solid var(--color-primary)",
-            overflow: "hidden", flexShrink: 0, background: "#fff",
-          }}>
-            <img
-              src={`https://api.dicebear.com/9.x/initials/svg?seed=${order.user?.name}`}
-              style={{ width: "100%", height: "100%" }} alt=""
-            />
+        <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+          <div style={{ width:44,height:44,borderRadius:"50%",border:"2px solid var(--color-primary)",overflow:"hidden",flexShrink:0,background:"var(--color-surface-container)" }}>
+            <img src={`https://api.dicebear.com/9.x/initials/svg?seed=${order.user?.name}`} style={{ width:"100%",height:"100%" }} alt="" />
           </div>
           <div>
-            <div style={{
-              fontSize: 16, fontWeight: 800, color: "#111827",
-              fontFamily: "'Bricolage Grotesque', sans-serif",
-            }}>
-              {order.partyName}
-            </div>
-            <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, marginTop: 2 }}>
-              by {order.user?.name || "Unknown Salesman"}
-            </div>
+            <div style={{ fontSize:16,fontWeight:800,color:"var(--color-on-surface)",fontFamily:"'Bricolage Grotesque',sans-serif" }}>{order.partyName}</div>
+            <div style={{ fontSize:12,color:"var(--color-on-surface-variant)",fontWeight:600,marginTop:2 }}>by {order.user?.name || "Unknown Salesman"}</div>
           </div>
         </div>
       </Section>
@@ -281,12 +281,7 @@ const InfoBlock = ({ order, isDesktop, onImageClick }) => {
       {/* Description */}
       {order.description && (
         <Section label="Description">
-          <p style={{
-            fontSize: 14, color: "#374151", lineHeight: 1.65,
-            margin: 0, whiteSpace: "pre-wrap",
-          }}>
-            {order.description}
-          </p>
+          <p style={{ fontSize:14,color:"var(--color-on-surface)",lineHeight:1.65,margin:0,whiteSpace:"pre-wrap" }}>{order.description}</p>
         </Section>
       )}
 
@@ -338,19 +333,13 @@ const InfoBlock = ({ order, isDesktop, onImageClick }) => {
       {/* Existing Remark */}
       {order.remark && (
         <Section label="Remark from admin">
-          <div style={{
-            fontSize: 13, color: "#374151", fontStyle: "italic",
-            background: "#f9fafb", borderRadius: 10, padding: "10px 14px",
-            border: "1px solid #e5e7eb", lineHeight: 1.6,
-          }}>
-            💬 {order.remark}
-          </div>
+          <div style={{ fontSize:13,color:"var(--color-on-surface)",fontStyle:"italic",background:"var(--color-surface-container)",borderRadius:10,padding:"10px 14px",border:"1px solid var(--color-outline-variant)",lineHeight:1.6 }}>💬 {order.remark}</div>
         </Section>
       )}
 
       {/* Submitted */}
       <Section label="Submitted" noBorder>
-        <div style={{ fontSize: 13, color: "#374151", fontWeight: 600 }}>
+        <div style={{ fontSize:13,color:"var(--color-on-surface)",fontWeight:600 }}>
           {dt.toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
           {" · "}
           {dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
@@ -361,114 +350,44 @@ const InfoBlock = ({ order, isDesktop, onImageClick }) => {
 };
 
 /* ─────────────────────────────────────────────
-   ActionBlock — defined OUTSIDE AdminOrderDetail
-   so textarea is never unmounted while typing
+   ActionBlock
 ───────────────────────────────────────────── */
-const ActionBlock = ({
-  isDesktop, newStatus, setNewStatus,
-  remark, setRemark,
-  isUpdating, saveSuccess,
-  onSave, onDelete,
-}) => (
-  <div style={{
-    background: "#f9fafb",
-    borderRadius: 16,
-    border: "1.5px solid #e5e7eb",
-    overflow: "hidden",
-  }}>
-    {/* Status selector */}
-    <div style={{ padding: "14px 16px 12px" }}>
-      <div style={{
-        fontSize: 10, fontWeight: 800, color: "#9ca3af",
-        textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10,
-      }}>
-        Update status
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+const ActionBlock = ({ isDesktop,newStatus,setNewStatus,remark,setRemark,isUpdating,saveSuccess,onSave,onDelete }) => (
+  <div style={{ background:"var(--color-surface-container-lowest)",borderRadius:20,border:"1.5px solid var(--color-outline-variant)",overflow:"hidden" }}>
+    <style>{`@keyframes aodOverlay{from{opacity:0}to{opacity:1}}`}</style>
+    {/* Status */}
+    <div style={{ padding:"16px 16px 12px" }}>
+      <div style={{ fontSize:10,fontWeight:800,color:"var(--color-outline)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,fontFamily:"'DM Sans',sans-serif" }}>Update Status</div>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
         {STATUSES.map((s) => {
           const sc = getStatusColor(s);
           const isSelected = newStatus === s;
           return (
-            <button
-              key={s}
-              onClick={() => setNewStatus(s)}
-              style={{
-                padding: "11px 0", fontSize: 13, fontWeight: 700,
-                borderRadius: 12, cursor: "pointer",
-                textTransform: "capitalize", letterSpacing: "0.02em",
-                background: isSelected ? sc.bg : "#fff",
-                color: isSelected ? sc.text : "#6b7280",
-                border: isSelected ? `2px solid ${sc.dot}` : "1.5px solid #e5e7eb",
-                transition: "all 0.15s",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              }}
-            >
-              {isSelected && (
-                <div style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  background: sc.dot, flexShrink: 0,
-                }} />
-              )}
+            <button key={s} onClick={() => setNewStatus(s)} style={{ padding:"12px 0",fontSize:13,fontWeight:700,borderRadius:14,cursor:"pointer",textTransform:"capitalize",background:isSelected?sc.bg:"var(--color-surface-container)",color:isSelected?sc.text:"var(--color-on-surface-variant)",border:isSelected?`2px solid ${sc.dot}`:"1.5px solid var(--color-outline-variant)",transition:"all 0.15s",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"'DM Sans',sans-serif" }}>
+              {isSelected && <div style={{ width:7,height:7,borderRadius:"50%",background:sc.dot,flexShrink:0 }} />}
               {s}
             </button>
           );
         })}
       </div>
     </div>
-
-    {/* Remark textarea */}
-    <div style={{ padding: "0 16px 14px" }}>
-      <div style={{
-        fontSize: 10, fontWeight: 800, color: "#9ca3af",
-        textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 7,
-      }}>
-        Remark for salesman
-      </div>
-      <textarea
-        value={remark}
-        onChange={(e) => setRemark(e.target.value)}
-        placeholder="Leave a note for the salesman…"
-        rows={isDesktop ? 4 : 3}
-        style={{
-          width: "100%", background: "#fff",
-          border: "1.5px solid #e5e7eb", color: "#111827",
-          fontSize: 14, borderRadius: 12, padding: "11px 14px",
-          outline: "none", resize: "vertical", fontFamily: "inherit",
-          boxSizing: "border-box", lineHeight: 1.5,
-        }}
-        onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-        onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+    {/* Remark */}
+    <div style={{ padding:"0 16px 14px" }}>
+      <div style={{ fontSize:10,fontWeight:800,color:"var(--color-outline)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8,fontFamily:"'DM Sans',sans-serif" }}>Remark for Salesman</div>
+      <textarea value={remark} onChange={(e) => setRemark(e.target.value)} placeholder="Leave a note for the salesman…" rows={isDesktop?4:3}
+        style={{ width:"100%",background:"var(--color-surface-container)",border:"1.5px solid var(--color-outline-variant)",color:"var(--color-on-surface)",fontSize:14,borderRadius:12,padding:"11px 14px",outline:"none",resize:"vertical",fontFamily:"inherit",boxSizing:"border-box",lineHeight:1.5 }}
+        onFocus={(e) => (e.target.style.borderColor="var(--color-primary)")}
+        onBlur={(e) => (e.target.style.borderColor="var(--color-outline-variant)")}
       />
     </div>
-
-    {/* Action buttons */}
-    <div style={{ padding: "0 16px 16px", display: "flex", gap: 8 }}>
-      <button
-        onClick={onSave}
-        disabled={isUpdating}
-        style={{
-          flex: 1, padding: "13px", fontSize: 14, fontWeight: 700,
-          background: saveSuccess ? "#22c55e" : "var(--color-primary)",
-          color: "#fff", border: "none", borderRadius: 12,
-          cursor: isUpdating ? "not-allowed" : "pointer",
-          opacity: isUpdating ? 0.7 : 1,
-          transition: "background 0.3s",
-          letterSpacing: "0.02em",
-        }}
-      >
-        {isUpdating ? "Saving…" : saveSuccess ? "✓ Saved!" : "Save changes"}
+    {/* Buttons */}
+    <div style={{ padding:"0 16px 16px",display:"flex",gap:8 }}>
+      <button onClick={onSave} disabled={isUpdating} style={{ flex:1,padding:"14px",fontSize:14,fontWeight:800,background:saveSuccess?"#22c55e":"var(--color-primary)",color:"var(--color-on-primary)",border:"none",borderRadius:14,cursor:isUpdating?"not-allowed":"pointer",opacity:isUpdating?0.7:1,transition:"background 0.3s",fontFamily:"'Bricolage Grotesque',sans-serif",letterSpacing:"-0.1px" }}>
+        {isUpdating?"Saving…":saveSuccess?"✓ Saved!":"Save Changes"}
       </button>
-
-      <button
-        onClick={onDelete}
-        style={{
-          width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-          background: "#fef2f2", color: "#ef4444",
-          border: "1px solid #fecaca", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 18,
-        }}
-      >
+      <button onClick={onDelete} style={{ width:50,height:50,borderRadius:14,flexShrink:0,background:"color-mix(in srgb,#dc2626 10%,transparent)",color:"#dc2626",border:"1.5px solid color-mix(in srgb,#dc2626 25%,transparent)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,transition:"background 0.2s" }}
+        onMouseEnter={e=>e.currentTarget.style.background="color-mix(in srgb,#dc2626 18%,transparent)"}
+        onMouseLeave={e=>e.currentTarget.style.background="color-mix(in srgb,#dc2626 10%,transparent)"}>
         🗑️
       </button>
     </div>
@@ -501,6 +420,8 @@ const AdminOrderDetail = () => {
   const isDesktop = useIsDesktop();
 
   const order = allOrders?.find((o) => o._id === orderId);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [newStatus,   setNewStatus]   = useState("");
   const [remark,      setRemark]      = useState("");
@@ -555,11 +476,16 @@ const AdminOrderDetail = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm("Permanently delete this order?")) {
+  const handleDelete = () => setDeleteModalOpen(true);
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    try {
       await handleDeleteOrder(order._id);
-      // removeOrder already updated Redux — navigate back immediately
       navigate(-1);
+    } catch {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
     }
   };
 
@@ -763,37 +689,32 @@ const AdminOrderDetail = () => {
 
   /* ── MOBILE layout (original) ── */
   return (
-    <div ref={pageRef} style={{ width: "100%", maxWidth: 560, margin: "0 auto", paddingBottom: 48 }}>
+    <div ref={pageRef} style={{ width:"100%",maxWidth:560,margin:"0 auto",paddingBottom:"calc(88px + env(safe-area-inset-bottom,0px))",background:"var(--color-background)" }}>
 
       {/* Top Header */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 12,
-        padding: "14px 16px 12px",
-        borderBottom: "1px solid #f3f4f6",
-        position: "sticky", top: 0,
-        background: "rgba(255,255,255,0.92)",
-        backdropFilter: "blur(12px)",
-        zIndex: 10,
+        display:"flex",alignItems:"center",gap:12,
+        padding:"14px 16px 12px",
+        borderBottom:"1px solid var(--color-outline-variant)",
+        position:"sticky",top:0,
+        background:"color-mix(in srgb,var(--color-surface-container-lowest) 92%,transparent)",
+        backdropFilter:"blur(16px)",
+        zIndex:10,
       }}>
         <button
           onClick={() => navigate(-1)}
           style={{
-            width: 36, height: 36, borderRadius: "50%",
-            background: "#f3f4f6", border: "none",
-            cursor: "pointer", fontSize: 20,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, color: "#374151",
+            width:36,height:36,borderRadius:"50%",
+            background:"var(--color-surface-container)",border:"none",
+            cursor:"pointer",fontSize:20,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            flexShrink:0,color:"var(--color-on-surface)",
           }}
         >‹</button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 16, fontWeight: 800, color: "#111827",
-            fontFamily: "'Bricolage Grotesque', sans-serif",
-          }}>
-            Order detail
-          </div>
-          <div style={{ fontSize: 11, color: "#9ca3af", fontWeight: 600, marginTop: 1 }}>
+          <div style={{ fontSize:16,fontWeight:800,color:"var(--color-on-surface)",fontFamily:"'Bricolage Grotesque',sans-serif" }}>Order Detail</div>
+          <div style={{ fontSize:11,color:"var(--color-on-surface-variant)",fontWeight:600,marginTop:1 }}>
             {dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
             {" · "}
             {dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
@@ -814,15 +735,13 @@ const AdminOrderDetail = () => {
       <InfoBlock order={order} isDesktop={isDesktop} onImageClick={handleImageClick} />
 
       {/* Update panel */}
-      <div style={{ margin: "16px 16px 0" }}>
-        <ActionBlock
-          isDesktop={isDesktop}
-          newStatus={newStatus} setNewStatus={setNewStatus}
-          remark={remark} setRemark={setRemark}
-          isUpdating={isUpdating} saveSuccess={saveSuccess}
-          onSave={handleSave} onDelete={handleDelete}
-        />
+      <div style={{ margin:"16px 16px 0" }}>
+        <ActionBlock isDesktop={isDesktop} newStatus={newStatus} setNewStatus={setNewStatus}
+          remark={remark} setRemark={setRemark} isUpdating={isUpdating} saveSuccess={saveSuccess}
+          onSave={handleSave} onDelete={handleDelete} />
       </div>
+
+      <DeleteConfirmModal isOpen={deleteModalOpen} onConfirm={confirmDelete} onCancel={() => setDeleteModalOpen(false)} isDeleting={isDeleting} />
 
       <ImageViewer
         isOpen={viewerOpen}
