@@ -489,23 +489,21 @@ const AdminOrderDetail = () => {
     }
   };
 
-  if (!order) return (
-    <div style={{
-      textAlign: "center", padding: "80px 20px",
-      color: "#9ca3af", fontWeight: 600, fontSize: 14,
-    }}>
-      Loading…
-    </div>
-  );
-
-  const dt = new Date(order.createdAt);
-  const currentSColor = getStatusColor(newStatus || order.status);
-
-  /* ── Shared image click handler ── */
+  // ✅ ALL hooks must be before any early return
   const handleImageClick = useCallback((i) => {
     setViewerStart(i);
     setViewerOpen(true);
   }, []);
+
+  // Derived values (not hooks, but kept together for clarity)
+  const dt = order ? new Date(order.createdAt) : null;
+  const currentSColor = getStatusColor(newStatus || order?.status);
+
+  if (!order) return (
+    <div style={{ textAlign:"center",padding:"80px 20px",color:"var(--color-on-surface-variant)",fontWeight:600,fontSize:14 }}>
+      Loading…
+    </div>
+  );
 
   /* ── DESKTOP layout ── */
   if (isDesktop) {
