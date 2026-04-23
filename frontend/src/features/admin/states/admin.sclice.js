@@ -25,8 +25,16 @@ const adminSlice = createSlice({
     setUploadStatus: (state, action) => {
       state.uploadStatus = action.payload;
     },
+    // Optimistic in-place update — no full refetch needed
+    updateOrder: (state, action) => {
+      const idx = state.allOrders.findIndex((o) => o._id === action.payload._id);
+      if (idx !== -1) state.allOrders[idx] = { ...state.allOrders[idx], ...action.payload };
+    },
+    removeOrder: (state, action) => {
+      state.allOrders = state.allOrders.filter((o) => o._id !== action.payload);
+    },
   },
 });
 
-export const { setSalesUser, setAllOrders, setLoading, setError, setUploadStatus } = adminSlice.actions;
+export const { setSalesUser, setAllOrders, setLoading, setError, setUploadStatus, updateOrder, removeOrder } = adminSlice.actions;
 export default adminSlice.reducer;

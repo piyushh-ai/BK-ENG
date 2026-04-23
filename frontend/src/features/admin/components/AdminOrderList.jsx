@@ -143,184 +143,89 @@ const MobileFilterDrawer = ({
           left: 0,
           right: 0,
           zIndex: 999,
-          background: "#ffffff",
+          background: "var(--color-surface-container-lowest)",
           borderRadius: "24px 24px 0 0",
-          padding: "0 0 32px",
-          boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
-          maxHeight: "82vh",
-          overflowY: "auto",
+          paddingBottom: 0,
+          boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+          maxHeight: "88vh",
+          display: "flex",
+          flexDirection: "column",
           transform: "translateY(100%)",
         }}
       >
         {/* Handle bar */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            paddingTop: 12,
-            paddingBottom: 4,
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 4,
-              borderRadius: 99,
-              background: "#e2e8f0",
-            }}
-          />
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 4, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 4, borderRadius: 99, background: "var(--color-outline-variant)" }} />
         </div>
 
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "12px 20px 16px",
-            borderBottom: "1px solid #f1f5f9",
-          }}
-        >
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "12px 20px 14px",
+          borderBottom: "1px solid var(--color-outline-variant)",
+          flexShrink: 0,
+        }}>
           <div>
-            <div
-              style={{
-                fontSize: 17,
-                fontWeight: 800,
-                color: "#0f172a",
-                fontFamily: "'Bricolage Grotesque', sans-serif",
-              }}
-            >
-              Filters & View
-            </div>
+            <div style={{
+              fontSize: 18, fontWeight: 800,
+              color: "var(--color-on-surface)",
+              fontFamily: "'Bricolage Grotesque', sans-serif",
+              letterSpacing: "-0.3px",
+            }}>Filters &amp; View</div>
             {activeCount > 0 && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "#6366f1",
-                  fontWeight: 600,
-                  marginTop: 1,
-                }}
-              >
+              <div style={{ fontSize: 11, color: "var(--color-primary)", fontWeight: 600, marginTop: 2 }}>
                 {activeCount} filter{activeCount > 1 ? "s" : ""} active
               </div>
             )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {activeCount > 0 && (
-              <button
-                onClick={() => {
-                  setViewMode("grouped_salesman");
-                  setSortOrder("date_desc");
-                  setFilterStatus("all");
-                }}
+              <button onClick={() => { setViewMode("grouped_salesman"); setSortOrder("date_desc"); setFilterStatus("all"); }}
                 style={{
-                  padding: "6px 12px",
-                  borderRadius: 8,
-                  border: "1.5px solid #e2e8f0",
-                  background: "#f8fafc",
-                  color: "#64748b",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  outline: "none",
-                }}
-              >
-                Reset
-              </button>
+                  padding: "6px 14px", borderRadius: 20,
+                  border: "1.5px solid var(--color-outline-variant)",
+                  background: "var(--color-surface-container)",
+                  color: "var(--color-on-surface-variant)",
+                  fontSize: 12, fontWeight: 700, cursor: "pointer", outline: "none",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}>Reset</button>
             )}
-            <button
-              onClick={handleClose}
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                border: "1.5px solid #e2e8f0",
-                background: "#f8fafc",
-                color: "#64748b",
-                display: "grid",
-                placeItems: "center",
-                cursor: "pointer",
-                outline: "none",
-                flexShrink: 0,
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+            <button onClick={handleClose} style={{
+              width: 34, height: 34, borderRadius: 10,
+              border: "1.5px solid var(--color-outline-variant)",
+              background: "var(--color-surface-container)",
+              color: "var(--color-on-surface-variant)",
+              display: "grid", placeItems: "center",
+              cursor: "pointer", outline: "none", flexShrink: 0,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
         </div>
 
-        <div style={{ padding: "20px 20px 0" }}>
-          {/* VIEW section */}
-          <div style={{ marginBottom: 24 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#94a3b8",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                marginBottom: 10,
-              }}
-            >
-              View As
-            </div>
+        {/* Scrollable content */}
+        <div style={{ overflowY: "auto", flex: 1, padding: "20px 20px 0" }}>
+
+          {/* VIEW AS section */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>View As</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {VIEW_OPTIONS.map((opt) => {
                 const isActive = viewMode === opt.value;
                 return (
-                  <button
-                    key={opt.value}
-                    onClick={() => setViewMode(opt.value)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "12px 14px",
-                      borderRadius: 12,
-                      border: `1.5px solid ${isActive ? "#c7d2fe" : "#f1f5f9"}`,
-                      background: isActive ? "#eef2ff" : "#fafbfc",
-                      cursor: "pointer",
-                      outline: "none",
-                      textAlign: "left",
-                      transition: "all 0.12s",
-                    }}
-                  >
-                    <span style={{ fontSize: 18, lineHeight: 1 }}>
-                      {opt.icon}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: isActive ? 700 : 500,
-                        color: isActive ? "#4338ca" : "#475569",
-                        flex: 1,
-                      }}
-                    >
-                      {opt.label}
-                    </span>
+                  <button key={opt.value} onClick={() => setViewMode(opt.value)} style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "12px 14px", borderRadius: 14,
+                    border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                    background: isActive ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "var(--color-surface-container)",
+                    cursor: "pointer", outline: "none", textAlign: "left", transition: "all 0.15s",
+                  }}>
+                    <span style={{ fontSize: 18, lineHeight: 1 }}>{opt.icon}</span>
+                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 700 : 500, color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>{opt.label}</span>
                     {isActive && (
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#6366f1"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     )}
@@ -330,62 +235,23 @@ const MobileFilterDrawer = ({
             </div>
           </div>
 
-          {/* SORT section */}
-          <div style={{ marginBottom: 24 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#94a3b8",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                marginBottom: 10,
-              }}
-            >
-              Sort By
-            </div>
+          {/* SORT BY section */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>Sort By</div>
             <div style={{ display: "flex", gap: 8 }}>
               {SORT_OPTIONS.map((opt) => {
                 const isActive = sortOrder === opt.value;
                 return (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSortOrder(opt.value)}
-                    style={{
-                      flex: 1,
-                      padding: "10px 8px",
-                      borderRadius: 12,
-                      border: `1.5px solid ${isActive ? "#c7d2fe" : "#f1f5f9"}`,
-                      background: isActive ? "#eef2ff" : "#fafbfc",
-                      cursor: "pointer",
-                      outline: "none",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 4,
-                      transition: "all 0.12s",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 900,
-                        color: isActive ? "#6366f1" : "#94a3b8",
-                      }}
-                    >
-                      {opt.icon}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: isActive ? 700 : 600,
-                        color: isActive ? "#4338ca" : "#64748b",
-                        textAlign: "center",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {opt.label}
-                    </span>
+                  <button key={opt.value} onClick={() => setSortOrder(opt.value)} style={{
+                    flex: 1, padding: "12px 8px", borderRadius: 14,
+                    border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                    background: isActive ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "var(--color-surface-container)",
+                    cursor: "pointer", outline: "none",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                    transition: "all 0.15s",
+                  }}>
+                    <span style={{ fontSize: 16, fontWeight: 900, color: isActive ? "var(--color-primary)" : "var(--color-outline)" }}>{opt.icon}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: isActive ? 700 : 600, color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)", textAlign: "center", lineHeight: 1.3, fontFamily: "'DM Sans', sans-serif" }}>{opt.label}</span>
                   </button>
                 );
               })}
@@ -394,80 +260,25 @@ const MobileFilterDrawer = ({
 
           {/* STATUS section */}
           <div style={{ marginBottom: 8 }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#94a3b8",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                marginBottom: 10,
-              }}
-            >
-              Status
-            </div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>Status</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {STATUS_OPTIONS.map((s) => {
-                const sc =
-                  s === "all"
-                    ? {
-                        bg: "#eef2ff",
-                        text: "#4338ca",
-                        dot: "#6366f1",
-                        border: "#c7d2fe",
-                      }
-                    : getStatusConfig(s);
+                const sc = s === "all" ? { bg: "#eef2ff", text: "#4338ca", dot: "#6366f1", border: "#c7d2fe" } : getStatusConfig(s);
                 const isActive = filterStatus === s;
                 return (
-                  <button
-                    key={s}
-                    onClick={() => setFilterStatus(s)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "11px 14px",
-                      borderRadius: 12,
-                      border: `1.5px solid ${isActive ? sc.border : "#f1f5f9"}`,
-                      background: isActive ? sc.bg : "#fafbfc",
-                      cursor: "pointer",
-                      outline: "none",
-                      textAlign: "left",
-                      transition: "all 0.12s",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: "50%",
-                        background: isActive ? sc.dot : "#e2e8f0",
-                        flexShrink: 0,
-                        transition: "background 0.12s",
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: isActive ? 700 : 500,
-                        color: isActive ? sc.text : "#475569",
-                        textTransform: "capitalize",
-                        flex: 1,
-                      }}
-                    >
+                  <button key={s} onClick={() => setFilterStatus(s)} style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "12px 14px", borderRadius: 14,
+                    border: `1.5px solid ${isActive ? sc.border : "var(--color-outline-variant)"}`,
+                    background: isActive ? sc.bg : "var(--color-surface-container)",
+                    cursor: "pointer", outline: "none", textAlign: "left", transition: "all 0.15s",
+                  }}>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: isActive ? sc.dot : "var(--color-outline-variant)", flexShrink: 0, transition: "background 0.15s" }} />
+                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 700 : 500, color: isActive ? sc.text : "var(--color-on-surface-variant)", textTransform: "capitalize", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>
                       {s === "all" ? "All Orders" : s}
                     </span>
                     {isActive && (
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke={sc.dot}
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={sc.dot} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     )}
@@ -478,24 +289,26 @@ const MobileFilterDrawer = ({
           </div>
         </div>
 
-        {/* Apply button */}
-        <div style={{ padding: "20px 20px 0" }}>
-          <button
-            onClick={handleClose}
-            style={{
-              width: "100%",
-              padding: "14px",
-              borderRadius: 14,
-              border: "none",
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 800,
-              cursor: "pointer",
-              outline: "none",
-              letterSpacing: "0.02em",
-              boxShadow: "0 4px 16px rgba(99,102,241,0.3)",
-            }}
+        {/* ✅ Apply button — sticky at bottom, always above the navbar */}
+        <div style={{
+          padding: "16px 20px",
+          paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px) + 68px)",
+          background: "var(--color-surface-container-lowest)",
+          borderTop: "1px solid var(--color-outline-variant)",
+          flexShrink: 0,
+        }}>
+          <button onClick={handleClose} style={{
+            width: "100%", padding: "15px", borderRadius: 16, border: "none",
+            background: "var(--color-primary)",
+            color: "var(--color-on-primary)",
+            fontSize: 15, fontWeight: 800, cursor: "pointer", outline: "none",
+            letterSpacing: "-0.1px",
+            fontFamily: "'Bricolage Grotesque', sans-serif",
+            boxShadow: "0 4px 20px color-mix(in srgb, var(--color-primary) 40%, transparent)",
+            transition: "opacity 0.2s, transform 0.15s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
           >
             Apply Filters
           </button>

@@ -5,6 +5,7 @@ import { getMe } from "../features/auth/services/auth.api";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../features/auth/state/auth.slice";
 import GlobalLoader from "./GlobalLoader";
+import { ThemeProvider } from "./ThemeProvider";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -40,13 +41,17 @@ const App = () => {
   }, [user]);
 
   if (isCheckingAuth) {
-    return <GlobalLoader />;
+    return (
+      <ThemeProvider>
+        <GlobalLoader />
+      </ThemeProvider>
+    );
   }
 
   return (
-    <div>
+    <ThemeProvider>
       <RouterProvider router={appRouter} />
-    </div>
+    </ThemeProvider>
   );
 };
 

@@ -1,6 +1,6 @@
 import { getAllSalesUsers, updateRole, uploadExcel, getAllOrdersAdmin, updateOrderStatusAdmin, deleteOrderAdmin, searchOrdersAdmin } from "../services/admin.api";
 import { useDispatch } from "react-redux";
-import { setLoading, setError, setUploadStatus, setSalesUser, setAllOrders } from "../states/admin.sclice";
+import { setLoading, setError, setUploadStatus, setSalesUser, setAllOrders, updateOrder, removeOrder } from "../states/admin.sclice";
 
 export const useAdmin = () => {
   const dispatch = useDispatch();
@@ -78,12 +78,11 @@ export const useAdmin = () => {
 
   const handleUpdateOrderStatus = async (id, payload) => {
     try {
-      dispatch(setLoading(true));
+      // Optimistic update — UI responds instantly
+      dispatch(updateOrder({ _id: id, ...payload }));
       const response = await updateOrderStatusAdmin(id, payload);
-      dispatch(setLoading(false));
       return response;
     } catch (error) {
-      dispatch(setLoading(false));
       dispatch(setError(error));
       throw error;
     }
@@ -91,12 +90,11 @@ export const useAdmin = () => {
 
   const handleDeleteOrder = async (id) => {
     try {
-      dispatch(setLoading(true));
+      // Optimistic remove — gone from list immediately
+      dispatch(removeOrder(id));
       const response = await deleteOrderAdmin(id);
-      dispatch(setLoading(false));
       return response;
     } catch (error) {
-      dispatch(setLoading(false));
       dispatch(setError(error));
       throw error;
     }

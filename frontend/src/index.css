@@ -1,4 +1,8 @@
 @import "tailwindcss";
+
+/* ════════════════════════════════════════════════════════════
+   LIGHT MODE (default)
+════════════════════════════════════════════════════════════ */
 @theme {
   --color-on-error-container: #93000a;
   --color-outline-variant: #c3c6ce;
@@ -47,4 +51,105 @@
   --color-inverse-primary: #abc9ef;
   --color-on-tertiary-container: #c59c63;
   --color-secondary-fixed: #cbe7f5;
+}
+
+/* ════════════════════════════════════════════════════════════
+   DARK MODE — override via [data-theme="dark"] on <html>
+════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  --color-background:                #0d1117;
+  --color-surface:                   #0d1117;
+  --color-surface-bright:            #161b22;
+  --color-surface-container-lowest:  #010409;
+  --color-surface-container-low:     #13191f;
+  --color-surface-container:         #1c2128;
+  --color-surface-container-high:    #22272e;
+  --color-surface-container-highest: #2d333b;
+  --color-surface-dim:               #090c10;
+  --color-surface-variant:           #22272e;
+
+  --color-on-background:             #e6edf3;
+  --color-on-surface:                #e6edf3;
+  --color-on-surface-variant:        #8b949e;
+  --color-on-primary:                #ffffff;
+  --color-on-primary-container:      #abc9ef;
+  --color-on-secondary:              #ffffff;
+  --color-on-secondary-container:    #9ecad8;
+  --color-on-tertiary:               #ffffff;
+  --color-on-error:                  #ffffff;
+  --color-on-error-container:        #ffb4ab;
+
+  --color-primary:                   #abc9ef;
+  --color-primary-fixed:             #d1e4ff;
+  --color-primary-fixed-dim:         #2a4968;
+  --color-primary-container:         #1b3b5a;
+  --color-secondary:                 #9ecad8;
+  --color-secondary-fixed:           #cbe7f5;
+  --color-secondary-fixed-dim:       #304a55;
+  --color-secondary-container:       #1a3540;
+  --color-tertiary:                  #c59c63;
+  --color-tertiary-fixed:            #ffddb3;
+  --color-tertiary-fixed-dim:        #5f4110;
+  --color-tertiary-container:        #3a2800;
+
+  --color-outline:                   #484f58;
+  --color-outline-variant:           #30363d;
+  --color-inverse-surface:           #e6edf3;
+  --color-inverse-on-surface:        #1c2128;
+  --color-inverse-primary:           #002542;
+  --color-surface-tint:              #abc9ef;
+
+  --color-error:                     #ff453a;
+  --color-error-container:           #93000a;
+  --color-on-error-container:        #ffb4ab;
+}
+
+/* ════════════════════════════════════════════════════════════
+   GLOBAL BASE STYLES
+════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--color-background);
+  color: var(--color-on-surface);
+  /* Native-like font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Prevent text size inflation on mobile */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Bottom padding for fixed bottom nav on mobile */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent pull-to-refresh conflict */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-outline); }
+
+/* Global transition for theme switches */
+*, *::before, *::after {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+}
+/* But NOT for transforms, opacity, etc. (breaks animations) */
+[style*="transform"], [style*="opacity"], canvas, video, svg * {
+  transition: none !important;
 }

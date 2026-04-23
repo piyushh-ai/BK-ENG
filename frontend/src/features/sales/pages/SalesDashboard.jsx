@@ -9,6 +9,7 @@ import EmptyState from "../components/EmptyState";
 import Pagination from "../components/Pagination";
 import OverviewSection from "../components/OverviewSection";
 import SheetBar from "../components/SheetBar";
+
 import { getCompanySheets, getCompanyStock, getBoschStock, masterSearch } from "../services/sales.api";
 
 function useDebounce(value, delay = 380) {
@@ -27,6 +28,9 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
   const activeTab = adminTab || tab || "overview";
   const LIMIT = 12;
   const searchRef = useRef(null);
+  // Increment this key every time we navigate to history so OrderHistory
+  // always remounts (triggering a fresh fetchMyOrders) after a new order.
+  const [historyKey, setHistoryKey] = useState(0);
 
   const [sheets, setSheets] = useState([]);
   const [sheetsLoading, setSheetsLoading] = useState(false);
@@ -92,6 +96,8 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
   const handleTabChange = useCallback((t) => {
     navigate(adminTab ? `/admin/${t}` : `/sales/${t}`);
     setSearchInput(""); setPage(1);
+    // Force OrderHistory to remount & refetch when navigating to history
+    if (t === "history") setHistoryKey((k) => k + 1);
   }, [adminTab, navigate]);
 
   const handleSheetSelect = useCallback((sheet) => {
@@ -227,7 +233,7 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
         {!hideNavbar && <SalesNavbar activeTab={activeTab} onTabChange={handleTabChange} />}
 
         <div className="sd-content">
-          {activeTab !== "overview" && (
+          {activeTab !== "overview" && activeTab !== "settings" && (
             <div className="sd-page-header">
               <h1 className="sd-page-title">
                 {activeTab === "company" && "Company Stock"}
@@ -312,7 +318,7 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
           )}
 
           {activeTab === "orders"  && <CreateOrder onSuccess={() => handleTabChange("history")} />}
-          {activeTab === "history" && <OrderHistory />}
+          {activeTab === "history" && <OrderHistory key={historyKey} />}
         </div>
       </div>
     </>

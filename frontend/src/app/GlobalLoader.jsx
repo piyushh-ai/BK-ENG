@@ -2,7 +2,7 @@ import React from 'react';
 
 const GlobalLoader = () => {
   return (
-    <div className="flex flex-col items-center justify-center w-screen h-screen bg-[#f8f9fa] font-['DM_Sans']">
+    <div style={{ background: "var(--color-background)" }} className="flex flex-col items-center justify-center w-screen h-screen font-['DM_Sans']">
       <style>{`
         @keyframes gl-spin {
           0% { transform: rotate(0deg); }

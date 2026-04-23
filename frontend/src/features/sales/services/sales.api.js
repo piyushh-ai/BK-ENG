@@ -58,27 +58,31 @@ export const createOrder = async (formData) => {
 
 /**
  * Get logged-in user's own orders (paginated)
+ * cache: false — always fetch fresh so newly created orders appear immediately
  */
 export const getMyOrders = async ({ page = 1, limit = 10 } = {}) => {
   const response = await apiInstance.get("/salesOrder/my", {
     params: { page, limit },
+    cache: false,
   });
   return response.data;
 };
 
 /**
  * Get single order detail
+ * cache: false — always fetch fresh detail
  */
 export const getOrderById = async (id) => {
-  const response = await apiInstance.get(`/salesOrder/${id}`);
+  const response = await apiInstance.get(`/salesOrder/${id}`, { cache: false });
   return response.data;
 };
 
 /**
  * Search own orders by party name
+ * cache: false — search should always return live results
  */
 export const searchOrders = async (q) => {
-  const response = await apiInstance.get("/salesOrder/search", { params: { q } });
+  const response = await apiInstance.get("/salesOrder/search", { params: { q }, cache: false });
   return response.data;
 };
 

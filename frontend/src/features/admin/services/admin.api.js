@@ -48,9 +48,10 @@ const _adminAxios = Axios.create({
 const adminApiInstance = setupCache(_adminAxios, { ttl: 2 * 60 * 1000, methods: ["get"] });
 
 
+// cache: false — admin must always see latest orders after any status update
 export const getAllOrdersAdmin = async (page = 1, limit = 100) => {
     try {
-        const response = await adminApiInstance.get(`/all?page=${page}&limit=${limit}`);
+        const response = await adminApiInstance.get(`/all?page=${page}&limit=${limit}`, { cache: false });
         return response.data;
     } catch (error) {
         throw error;
@@ -66,9 +67,10 @@ export const updateOrderStatusAdmin = async (id, payload) => {
     }
 };
 
+// cache: false — search must return live results
 export const searchOrdersAdmin = async (query) => {
     try {
-        const response = await adminApiInstance.get(`/search?q=${query}`);
+        const response = await adminApiInstance.get(`/search?q=${query}`, { cache: false });
         return response.data;
     } catch (error) {
         throw error;

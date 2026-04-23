@@ -244,101 +244,12 @@ const Section = ({ label, children, noBorder }) => (
 );
 
 /* ─────────────────────────────────────────────
-   Responsive hook
+   InfoBlock — defined OUTSIDE AdminOrderDetail
+   so it is not recreated on every render
 ───────────────────────────────────────────── */
-const useIsDesktop = () => {
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 900 : false
-  );
-  useEffect(() => {
-    const handler = () => setIsDesktop(window.innerWidth >= 900);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return isDesktop;
-};
-
-/* ─────────────────────────────────────────────
-   Main Detail Page
-───────────────────────────────────────────── */
-const AdminOrderDetail = () => {
-  const { orderId } = useParams();
-  const navigate = useNavigate();
-  const allOrders = useSelector((s) => s.admin.allOrders);
-  const { handleUpdateOrderStatus, handleDeleteOrder, handleSearchOrders } = useAdmin();
-  const isDesktop = useIsDesktop();
-
-  const order = allOrders?.find((o) => o._id === orderId);
-
-  const [newStatus,   setNewStatus]   = useState("");
-  const [remark,      setRemark]      = useState("");
-  const [isUpdating,  setIsUpdating]  = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [viewerOpen,  setViewerOpen]  = useState(false);
-  const [viewerStart, setViewerStart] = useState(0);
-  const pageRef = useRef(null);
-
-  useEffect(() => {
-    if (order) {
-      setNewStatus(order.status);
-      setRemark(order.remark || "");
-    }
-  }, [order?._id]);
-
-  useEffect(() => {
-    // If the user navigates directly to this route via a deep link, allOrders might be empty.
-    if (!allOrders || allOrders.length === 0) {
-      handleSearchOrders("");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (pageRef.current) {
-      gsap.fromTo(
-        pageRef.current,
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    if (allOrders && allOrders.length > 0 && !order) {
-      navigate("/admin/all_orders", { replace: true });
-    }
-  }, [allOrders, order]);
-
-  const handleSave = async () => {
-    setIsUpdating(true);
-    await handleUpdateOrderStatus(order._id, { status: newStatus, remark });
-    await handleSearchOrders("");
-    setIsUpdating(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
-  };
-
-  const handleDelete = async () => {
-    if (window.confirm("Permanently delete this order?")) {
-      await handleDeleteOrder(order._id);
-      await handleSearchOrders("");
-      navigate(-1);
-    }
-  };
-
-  if (!order) return (
-    <div style={{
-      textAlign: "center", padding: "80px 20px",
-      color: "#9ca3af", fontWeight: 600, fontSize: 14,
-    }}>
-      Loading…
-    </div>
-  );
-
+const InfoBlock = ({ order, isDesktop, onImageClick }) => {
   const dt = new Date(order.createdAt);
-  const currentSColor = getStatusColor(newStatus || order.status);
-
-  /* ── Shared content blocks ── */
-  const InfoBlock = () => (
+  return (
     <>
       {/* Party Info */}
       <Section label="Party info">
@@ -386,7 +297,7 @@ const AdminOrderDetail = () => {
             {order.images.slice(0, isDesktop ? 8 : 6).map((img, i) => (
               <div
                 key={i}
-                onClick={() => { setViewerStart(i); setViewerOpen(true); }}
+                onClick={() => onImageClick(i)}
                 style={{
                   width: isDesktop ? 84 : 72,
                   height: isDesktop ? 84 : 72,
@@ -447,112 +358,228 @@ const AdminOrderDetail = () => {
       </Section>
     </>
   );
+};
 
-  const ActionBlock = () => (
-    <div style={{
-      background: "#f9fafb",
-      borderRadius: isDesktop ? 16 : 16,
-      border: "1.5px solid #e5e7eb",
-      overflow: "hidden",
-    }}>
-      {/* Status selector */}
-      <div style={{ padding: "14px 16px 12px" }}>
-        <div style={{
-          fontSize: 10, fontWeight: 800, color: "#9ca3af",
-          textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10,
-        }}>
-          Update status
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {STATUSES.map((s) => {
-            const sc = getStatusColor(s);
-            const isSelected = newStatus === s;
-            return (
-              <button
-                key={s}
-                onClick={() => setNewStatus(s)}
-                style={{
-                  padding: "11px 0", fontSize: 13, fontWeight: 700,
-                  borderRadius: 12, cursor: "pointer",
-                  textTransform: "capitalize", letterSpacing: "0.02em",
-                  background: isSelected ? sc.bg : "#fff",
-                  color: isSelected ? sc.text : "#6b7280",
-                  border: isSelected ? `2px solid ${sc.dot}` : "1.5px solid #e5e7eb",
-                  transition: "all 0.15s",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}
-              >
-                {isSelected && (
-                  <div style={{
-                    width: 7, height: 7, borderRadius: "50%",
-                    background: sc.dot, flexShrink: 0,
-                  }} />
-                )}
-                {s}
-              </button>
-            );
-          })}
-        </div>
+/* ─────────────────────────────────────────────
+   ActionBlock — defined OUTSIDE AdminOrderDetail
+   so textarea is never unmounted while typing
+───────────────────────────────────────────── */
+const ActionBlock = ({
+  isDesktop, newStatus, setNewStatus,
+  remark, setRemark,
+  isUpdating, saveSuccess,
+  onSave, onDelete,
+}) => (
+  <div style={{
+    background: "#f9fafb",
+    borderRadius: 16,
+    border: "1.5px solid #e5e7eb",
+    overflow: "hidden",
+  }}>
+    {/* Status selector */}
+    <div style={{ padding: "14px 16px 12px" }}>
+      <div style={{
+        fontSize: 10, fontWeight: 800, color: "#9ca3af",
+        textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10,
+      }}>
+        Update status
       </div>
-
-      {/* Remark textarea */}
-      <div style={{ padding: "0 16px 14px" }}>
-        <div style={{
-          fontSize: 10, fontWeight: 800, color: "#9ca3af",
-          textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 7,
-        }}>
-          Remark for salesman
-        </div>
-        <textarea
-          value={remark}
-          onChange={(e) => setRemark(e.target.value)}
-          placeholder="Leave a note for the salesman…"
-          rows={isDesktop ? 4 : 3}
-          style={{
-            width: "100%", background: "#fff",
-            border: "1.5px solid #e5e7eb", color: "#111827",
-            fontSize: 14, borderRadius: 12, padding: "11px 14px",
-            outline: "none", resize: "vertical", fontFamily: "inherit",
-            boxSizing: "border-box", lineHeight: 1.5,
-          }}
-          onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-          onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
-        />
-      </div>
-
-      {/* Action buttons */}
-      <div style={{ padding: "0 16px 16px", display: "flex", gap: 8 }}>
-        <button
-          onClick={handleSave}
-          disabled={isUpdating}
-          style={{
-            flex: 1, padding: "13px", fontSize: 14, fontWeight: 700,
-            background: saveSuccess ? "#22c55e" : "var(--color-primary)",
-            color: "#fff", border: "none", borderRadius: 12,
-            cursor: isUpdating ? "not-allowed" : "pointer",
-            opacity: isUpdating ? 0.7 : 1,
-            transition: "background 0.3s",
-            letterSpacing: "0.02em",
-          }}
-        >
-          {isUpdating ? "Saving…" : saveSuccess ? "✓ Saved!" : "Save changes"}
-        </button>
-
-        <button
-          onClick={handleDelete}
-          style={{
-            width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-            background: "#fef2f2", color: "#ef4444",
-            border: "1px solid #fecaca", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 18,
-          }}
-        >
-          🗑️
-        </button>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {STATUSES.map((s) => {
+          const sc = getStatusColor(s);
+          const isSelected = newStatus === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setNewStatus(s)}
+              style={{
+                padding: "11px 0", fontSize: 13, fontWeight: 700,
+                borderRadius: 12, cursor: "pointer",
+                textTransform: "capitalize", letterSpacing: "0.02em",
+                background: isSelected ? sc.bg : "#fff",
+                color: isSelected ? sc.text : "#6b7280",
+                border: isSelected ? `2px solid ${sc.dot}` : "1.5px solid #e5e7eb",
+                transition: "all 0.15s",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}
+            >
+              {isSelected && (
+                <div style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  background: sc.dot, flexShrink: 0,
+                }} />
+              )}
+              {s}
+            </button>
+          );
+        })}
       </div>
     </div>
+
+    {/* Remark textarea */}
+    <div style={{ padding: "0 16px 14px" }}>
+      <div style={{
+        fontSize: 10, fontWeight: 800, color: "#9ca3af",
+        textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 7,
+      }}>
+        Remark for salesman
+      </div>
+      <textarea
+        value={remark}
+        onChange={(e) => setRemark(e.target.value)}
+        placeholder="Leave a note for the salesman…"
+        rows={isDesktop ? 4 : 3}
+        style={{
+          width: "100%", background: "#fff",
+          border: "1.5px solid #e5e7eb", color: "#111827",
+          fontSize: 14, borderRadius: 12, padding: "11px 14px",
+          outline: "none", resize: "vertical", fontFamily: "inherit",
+          boxSizing: "border-box", lineHeight: 1.5,
+        }}
+        onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+        onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+      />
+    </div>
+
+    {/* Action buttons */}
+    <div style={{ padding: "0 16px 16px", display: "flex", gap: 8 }}>
+      <button
+        onClick={onSave}
+        disabled={isUpdating}
+        style={{
+          flex: 1, padding: "13px", fontSize: 14, fontWeight: 700,
+          background: saveSuccess ? "#22c55e" : "var(--color-primary)",
+          color: "#fff", border: "none", borderRadius: 12,
+          cursor: isUpdating ? "not-allowed" : "pointer",
+          opacity: isUpdating ? 0.7 : 1,
+          transition: "background 0.3s",
+          letterSpacing: "0.02em",
+        }}
+      >
+        {isUpdating ? "Saving…" : saveSuccess ? "✓ Saved!" : "Save changes"}
+      </button>
+
+      <button
+        onClick={onDelete}
+        style={{
+          width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+          background: "#fef2f2", color: "#ef4444",
+          border: "1px solid #fecaca", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 18,
+        }}
+      >
+        🗑️
+      </button>
+    </div>
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   Responsive hook
+───────────────────────────────────────────── */
+const useIsDesktop = () => {
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 900 : false
   );
+  useEffect(() => {
+    const handler = () => setIsDesktop(window.innerWidth >= 900);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return isDesktop;
+};
+
+/* ─────────────────────────────────────────────
+   Main Detail Page
+───────────────────────────────────────────── */
+const AdminOrderDetail = () => {
+  const { orderId } = useParams();
+  const navigate = useNavigate();
+  const allOrders = useSelector((s) => s.admin.allOrders);
+  const { handleUpdateOrderStatus, handleDeleteOrder, handleSearchOrders } = useAdmin();
+  const isDesktop = useIsDesktop();
+
+  const order = allOrders?.find((o) => o._id === orderId);
+
+  const [newStatus,   setNewStatus]   = useState("");
+  const [remark,      setRemark]      = useState("");
+  const [isUpdating,  setIsUpdating]  = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [viewerOpen,  setViewerOpen]  = useState(false);
+  const [viewerStart, setViewerStart] = useState(0);
+  const pageRef = useRef(null);
+
+  // Sync form state whenever the order itself changes in Redux
+  useEffect(() => {
+    if (order) {
+      setNewStatus(order.status);
+      setRemark(order.remark || "");
+    }
+  }, [order?.status, order?.remark, order?._id]);
+
+  useEffect(() => {
+    // If the user navigates directly to this route via a deep link, allOrders might be empty.
+    if (!allOrders || allOrders.length === 0) {
+      handleSearchOrders("");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pageRef.current) {
+      gsap.fromTo(
+        pageRef.current,
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (allOrders && allOrders.length > 0 && !order) {
+      navigate("/admin/all_orders", { replace: true });
+    }
+  }, [allOrders, order]);
+
+  const handleSave = async () => {
+    setIsUpdating(true);
+    try {
+      await handleUpdateOrderStatus(order._id, { status: newStatus, remark });
+      // Optimistic Redux update handles the UI — no full refetch needed
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch {
+      // error handled in hook
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm("Permanently delete this order?")) {
+      await handleDeleteOrder(order._id);
+      // removeOrder already updated Redux — navigate back immediately
+      navigate(-1);
+    }
+  };
+
+  if (!order) return (
+    <div style={{
+      textAlign: "center", padding: "80px 20px",
+      color: "#9ca3af", fontWeight: 600, fontSize: 14,
+    }}>
+      Loading…
+    </div>
+  );
+
+  const dt = new Date(order.createdAt);
+  const currentSColor = getStatusColor(newStatus || order.status);
+
+  /* ── Shared image click handler ── */
+  const handleImageClick = useCallback((i) => {
+    setViewerStart(i);
+    setViewerOpen(true);
+  }, []);
 
   /* ── DESKTOP layout ── */
   if (isDesktop) {
@@ -642,7 +669,7 @@ const AdminOrderDetail = () => {
                 textTransform: "uppercase", letterSpacing: "0.1em",
               }}>Order Information</div>
             </div>
-            <InfoBlock />
+            <InfoBlock order={order} isDesktop={isDesktop} onImageClick={handleImageClick} />
           </div>
 
           {/* RIGHT — Sidebar: avatar stats + action panel */}
@@ -714,7 +741,13 @@ const AdminOrderDetail = () => {
             </div>
 
             {/* Action panel */}
-            <ActionBlock />
+            <ActionBlock
+              isDesktop={isDesktop}
+              newStatus={newStatus} setNewStatus={setNewStatus}
+              remark={remark} setRemark={setRemark}
+              isUpdating={isUpdating} saveSuccess={saveSuccess}
+              onSave={handleSave} onDelete={handleDelete}
+            />
           </div>
         </div>
 
@@ -778,11 +811,17 @@ const AdminOrderDetail = () => {
         </span>
       </div>
 
-      <InfoBlock />
+      <InfoBlock order={order} isDesktop={isDesktop} onImageClick={handleImageClick} />
 
       {/* Update panel */}
       <div style={{ margin: "16px 16px 0" }}>
-        <ActionBlock />
+        <ActionBlock
+          isDesktop={isDesktop}
+          newStatus={newStatus} setNewStatus={setNewStatus}
+          remark={remark} setRemark={setRemark}
+          isUpdating={isUpdating} saveSuccess={saveSuccess}
+          onSave={handleSave} onDelete={handleDelete}
+        />
       </div>
 
       <ImageViewer

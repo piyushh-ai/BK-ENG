@@ -7,6 +7,7 @@ import AdminOrderList from "../components/AdminOrderList";
 import CreateOrder from "../../sales/components/CreateOrder";
 import SalesDashboard from "../../sales/pages/SalesDashboard";
 
+
 const AdminDashboard = () => {
   const { tab } = useParams();
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ const AdminDashboard = () => {
             <CreateOrder onSuccess={() => navigate("/admin/all_orders")} />
           </div>
         )}
+
       </div>
     </div>
   );

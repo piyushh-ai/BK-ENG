@@ -51,27 +51,6 @@ const Login = () => {
       .to(footerRef.current, { opacity: 1, y: 0, duration: 0.32 }, "-=0.18");
   }, []);
 
-  const handleMouseMove = (e) => {
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 6;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 4;
-    gsap.to(cardRef.current, {
-      rotateY: x,
-      rotateX: -y,
-      duration: 0.55,
-      ease: "power2.out",
-      transformPerspective: 900,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    gsap.to(cardRef.current, {
-      rotateY: 0,
-      rotateX: 0,
-      duration: 0.8,
-      ease: "elastic.out(1,0.5)",
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -212,11 +191,10 @@ const Login = () => {
         }
         .lg-card {
           background: var(--color-surface-container-lowest);
-          border-radius: 20px;
+          border-radius: 22px;
           border: 1px solid var(--color-outline-variant);
           box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 16px 40px rgba(0,37,66,0.1);
           padding: 44px 40px 36px;
-          will-change: transform;
         }
         .lg-badge {
           display: inline-flex;
@@ -441,8 +419,6 @@ const Login = () => {
             <div
               ref={cardRef}
               className="lg-card"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
             >
               <div ref={badgeRef}>
                 <div className="lg-badge">
