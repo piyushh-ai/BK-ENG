@@ -6,6 +6,40 @@ import { useTheme } from "../../../app/ThemeProvider";
 import { useAuth } from "../../../features/auth/hook/useAuth";
 import { gsap } from "gsap";
 
+
+/* ── Profile Panel — defined OUTSIDE to prevent recreation on every render ── */
+const SalesProfilePanelContent = ({ initials, user, isAdmin, theme, toggleTheme, handleLogout }) => (
+  <>
+    <div className="snav-pd-user">
+      <div className="snav-pd-avatar">{initials}</div>
+      <div className="snav-pd-info">
+        <div className="snav-pd-name">{user?.name || "User"}</div>
+        <div className="snav-pd-email">{user?.email || ""}</div>
+        <div className="snav-pd-role">{isAdmin ? "🛡️ Admin" : "💼 Salesman"}</div>
+      </div>
+    </div>
+    <div className="snav-pd-divider" />
+    <div className="snav-pd-row">
+      <div className="snav-pd-row-left">
+        <span className="snav-pd-row-icon">{theme === "dark" ? "🌙" : "☀️"}</span>
+        <span className="snav-pd-row-label">Dark Mode</span>
+      </div>
+      <button className={`snav-pd-toggle${theme === "dark" ? " on" : ""}`} onClick={toggleTheme} aria-label="Toggle theme">
+        <span className="snav-pd-toggle-knob" />
+      </button>
+    </div>
+    <div className="snav-pd-divider" />
+    <button className="snav-pd-logout" onClick={handleLogout}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Sign Out
+    </button>
+  </>
+);
+
 const SalesNavbar = ({ activeTab, onTabChange }) => {
   const user = useSelector((state) => state.auth.user);
   const { theme, toggleTheme } = useTheme();
@@ -16,6 +50,7 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
   const tabRefs = useRef({});
   const dropdownRef = useRef(null);
   const avatarBtnRef = useRef(null);
+  const sheetRef = useRef(null); // mobile sheet ref
 
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -99,22 +134,23 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
     gsap.to(indicatorRef.current, { x: offsetLeft, width: offsetWidth, duration: 0.38, ease: "power3.inOut" });
   }, [activeTab]);
 
-  // Close dropdown on outside click
+  // Close on outside interaction — touchend so sheet buttons fire first
   useEffect(() => {
     if (!profileOpen) return;
     const handleClick = (e) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
-        avatarBtnRef.current && !avatarBtnRef.current.contains(e.target)
-      ) {
+      const target = e.target;
+      const insideDropdown = dropdownRef.current && dropdownRef.current.contains(target);
+      const insideSheet    = sheetRef.current    && sheetRef.current.contains(target);
+      const insideAvatar   = avatarBtnRef.current && avatarBtnRef.current.contains(target);
+      if (!insideDropdown && !insideSheet && !insideAvatar) {
         setProfileOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
-    document.addEventListener("touchstart", handleClick);
+    document.addEventListener("touchend", handleClick);
     return () => {
       document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("touchstart", handleClick);
+      document.removeEventListener("touchend", handleClick);
     };
   }, [profileOpen]);
 
@@ -134,49 +170,6 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
 
   const isAdmin = user?.role === "admin";
 
-  // ── Shared Profile Panel Content ────────────────────────────
-  const ProfilePanelContent = () => (
-    <>
-      {/* User info */}
-      <div className="snav-pd-user">
-        <div className="snav-pd-avatar">{initials}</div>
-        <div className="snav-pd-info">
-          <div className="snav-pd-name">{user?.name || "User"}</div>
-          <div className="snav-pd-email">{user?.email || ""}</div>
-          <div className="snav-pd-role">{isAdmin ? "🛡️ Admin" : "💼 Salesman"}</div>
-        </div>
-      </div>
-
-      <div className="snav-pd-divider" />
-
-      {/* Theme toggle */}
-      <div className="snav-pd-row">
-        <div className="snav-pd-row-left">
-          <span className="snav-pd-row-icon">{theme === "dark" ? "🌙" : "☀️"}</span>
-          <span className="snav-pd-row-label">Dark Mode</span>
-        </div>
-        <button
-          className={`snav-pd-toggle${theme === "dark" ? " on" : ""}`}
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          <span className="snav-pd-toggle-knob" />
-        </button>
-      </div>
-
-      <div className="snav-pd-divider" />
-
-      {/* Logout */}
-      <button className="snav-pd-logout" onClick={handleLogout}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        Sign Out
-      </button>
-    </>
-  );
 
   return (
     <>
@@ -285,20 +278,21 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
         /* ══ MOBILE BOTTOM SHEET ══ */
         .snav-sheet-overlay {
           display: none;
-          position: fixed; inset: 0; z-index: 99998;
-          background: rgba(0,0,0,0.4);
+          position: fixed; inset: 0; z-index: 100000;
+          background: rgba(0,0,0,0.45);
           backdrop-filter: blur(4px);
           -webkit-backdrop-filter: blur(4px);
           animation: snavOverlayIn 0.2s ease both;
+          pointer-events: none;
         }
         @keyframes snavOverlayIn { from { opacity:0 } to { opacity:1 } }
         .snav-sheet {
           display: none;
           position: fixed; bottom: 0; left: 0; right: 0;
-          z-index: 99999;
+          z-index: 100001;
           background: var(--color-surface-container-lowest);
           border-radius: 24px 24px 0 0;
-          padding: 0 0 env(safe-area-inset-bottom, 20px);
+          padding: 0 0 calc(env(safe-area-inset-bottom, 12px) + 8px);
           box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
           animation: snavSheetUp 0.32s cubic-bezier(0.32,0.72,0,1) both;
         }
@@ -546,7 +540,10 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
               {/* Desktop dropdown */}
               {profileOpen && (
                 <div className="snav-dropdown" ref={dropdownRef}>
-                  <ProfilePanelContent />
+                  <SalesProfilePanelContent
+                    initials={initials} user={user} isAdmin={isAdmin}
+                    theme={theme} toggleTheme={toggleTheme} handleLogout={handleLogout}
+                  />
                 </div>
               )}
             </div>
@@ -579,11 +576,14 @@ const SalesNavbar = ({ activeTab, onTabChange }) => {
           <div
             className={`snav-sheet-overlay${profileOpen ? " open" : ""}`}
             onClick={() => setProfileOpen(false)}
+            style={{ pointerEvents: profileOpen ? "auto" : "none" }}
           />
-          {/* Sheet */}
-          <div className={`snav-sheet${profileOpen ? " open" : ""}`}>
+          <div ref={sheetRef} className={`snav-sheet${profileOpen ? " open" : ""}`}>
             <div className="snav-sheet-handle" />
-            <ProfilePanelContent />
+            <SalesProfilePanelContent
+              initials={initials} user={user} isAdmin={isAdmin}
+              theme={theme} toggleTheme={toggleTheme} handleLogout={handleLogout}
+            />
           </div>
         </>,
         document.body

@@ -16,6 +16,7 @@ const Navbar = ({ activeTab, onTabChange }) => {
   const tabRefs = useRef({});
   const dropdownRef = useRef(null);
   const avatarBtnRef = useRef(null);
+  const sheetRef = useRef(null); // mobile bottom sheet ref
 
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -95,18 +96,25 @@ const Navbar = ({ activeTab, onTabChange }) => {
     gsap.to(indicatorRef.current, { x: offsetLeft, width: offsetWidth, duration: 0.38, ease: "power3.inOut" });
   }, [activeTab]);
 
-  // Close on outside click
+  // Close on outside interaction — touchend so sheet buttons can fire first
   useEffect(() => {
     if (!profileOpen) return;
     const handle = (e) => {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
-        avatarBtnRef.current && !avatarBtnRef.current.contains(e.target)
-      ) setProfileOpen(false);
+      const target = e.target;
+      const insideDropdown = dropdownRef.current && dropdownRef.current.contains(target);
+      const insideSheet    = sheetRef.current    && sheetRef.current.contains(target);
+      const insideAvatar   = avatarBtnRef.current && avatarBtnRef.current.contains(target);
+      if (!insideDropdown && !insideSheet && !insideAvatar) {
+        setProfileOpen(false);
+      }
     };
+    // Use touchend (not touchstart) so sheet buttons register click first
     document.addEventListener("mousedown", handle);
-    document.addEventListener("touchstart", handle);
-    return () => { document.removeEventListener("mousedown", handle); document.removeEventListener("touchstart", handle); };
+    document.addEventListener("touchend", handle);
+    return () => {
+      document.removeEventListener("mousedown", handle);
+      document.removeEventListener("touchend", handle);
+    };
   }, [profileOpen]);
 
   const handleLogout = async () => {
@@ -124,37 +132,38 @@ const Navbar = ({ activeTab, onTabChange }) => {
 
   const isAdmin = user?.role === "admin";
 
-  const ProfilePanelContent = () => (
-    <>
-      <div className="anav-pd-user">
-        <div className="anav-pd-avatar">{initials}</div>
-        <div className="anav-pd-info">
-          <div className="anav-pd-name">{user?.name || "Administrator"}</div>
-          <div className="anav-pd-email">{user?.email || ""}</div>
-          <div className="anav-pd-role">{isAdmin ? "🛡️ Admin" : "💼 Salesman"}</div>
-        </div>
+/* ProfilePanelContent — defined OUTSIDE so it's never recreated on each render */
+const ProfilePanelContent = ({ initials, user, isAdmin, theme, toggleTheme, handleLogout }) => (
+  <>
+    <div className="anav-pd-user">
+      <div className="anav-pd-avatar">{initials}</div>
+      <div className="anav-pd-info">
+        <div className="anav-pd-name">{user?.name || "Administrator"}</div>
+        <div className="anav-pd-email">{user?.email || ""}</div>
+        <div className="anav-pd-role">{isAdmin ? "🛡️ Admin" : "💼 Salesman"}</div>
       </div>
-      <div className="anav-pd-divider" />
-      <div className="anav-pd-row">
-        <div className="anav-pd-row-left">
-          <span className="anav-pd-row-icon">{theme === "dark" ? "🌙" : "☀️"}</span>
-          <span className="anav-pd-row-label">Dark Mode</span>
-        </div>
-        <button className={`anav-pd-toggle${theme === "dark" ? " on" : ""}`} onClick={toggleTheme} aria-label="Toggle theme">
-          <span className="anav-pd-toggle-knob" />
-        </button>
+    </div>
+    <div className="anav-pd-divider" />
+    <div className="anav-pd-row">
+      <div className="anav-pd-row-left">
+        <span className="anav-pd-row-icon">{theme === "dark" ? "🌙" : "☀️"}</span>
+        <span className="anav-pd-row-label">Dark Mode</span>
       </div>
-      <div className="anav-pd-divider" />
-      <button className="anav-pd-logout" onClick={handleLogout}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        Sign Out
+      <button className={`anav-pd-toggle${theme === "dark" ? " on" : ""}`} onClick={toggleTheme} aria-label="Toggle theme">
+        <span className="anav-pd-toggle-knob" />
       </button>
-    </>
-  );
+    </div>
+    <div className="anav-pd-divider" />
+    <button className="anav-pd-logout" onClick={handleLogout}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Sign Out
+    </button>
+  </>
+);
 
   return (
     <>
@@ -239,17 +248,18 @@ const Navbar = ({ activeTab, onTabChange }) => {
 
         /* Mobile bottom sheet */
         .anav-sheet-overlay {
-          display: none; position: fixed; inset: 0; z-index: 99998;
-          background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+          display: none; position: fixed; inset: 0; z-index: 100000;
+          background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
           -webkit-backdrop-filter: blur(4px);
           animation: anavOverlayIn 0.2s ease both;
+          pointer-events: none;
         }
         @keyframes anavOverlayIn { from { opacity:0 } to { opacity:1 } }
         .anav-sheet {
-          display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 99999;
+          display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100001;
           background: var(--color-surface-container-lowest);
           border-radius: 24px 24px 0 0;
-          padding: 0 0 env(safe-area-inset-bottom, 20px);
+          padding: 0 0 calc(env(safe-area-inset-bottom, 12px) + 8px);
           box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
           animation: anavSheetUp 0.32s cubic-bezier(0.32,0.72,0,1) both;
         }
@@ -321,7 +331,7 @@ const Navbar = ({ activeTab, onTabChange }) => {
           .snav-bot-tab.active .snav-bot-label { color: var(--color-primary); }
 
           /* Sheet visible on mobile */
-          .anav-sheet-overlay.open { display: block; }
+          .anav-sheet-overlay.open { display: block; pointer-events: auto; }
           .anav-sheet.open { display: block; }
           /* Dropdown hidden on mobile */
           .snav-dropdown { display: none !important; }
@@ -373,7 +383,10 @@ const Navbar = ({ activeTab, onTabChange }) => {
               </button>
               {profileOpen && (
                 <div className="snav-dropdown" ref={dropdownRef}>
-                  <ProfilePanelContent />
+                  <ProfilePanelContent
+                    initials={initials} user={user} isAdmin={isAdmin}
+                    theme={theme} toggleTheme={toggleTheme} handleLogout={handleLogout}
+                  />
                 </div>
               )}
             </div>
@@ -399,9 +412,12 @@ const Navbar = ({ activeTab, onTabChange }) => {
       {createPortal(
         <>
           <div className={`anav-sheet-overlay${profileOpen ? " open" : ""}`} onClick={() => setProfileOpen(false)} />
-          <div className={`anav-sheet${profileOpen ? " open" : ""}`}>
+          <div ref={sheetRef} className={`anav-sheet${profileOpen ? " open" : ""}`}>
             <div className="anav-sheet-handle" />
-            <ProfilePanelContent />
+            <ProfilePanelContent
+              initials={initials} user={user} isAdmin={isAdmin}
+              theme={theme} toggleTheme={toggleTheme} handleLogout={handleLogout}
+            />
           </div>
         </>,
         document.body

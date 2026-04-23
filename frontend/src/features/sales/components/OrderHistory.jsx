@@ -14,10 +14,10 @@ function useDebounce(value, delay = 420) {
 }
 
 const STATUS_META = {
-  pending:   { label: "Pending",   color: "#b45309", bg: "#fef3c7" },
-  completed: { label: "Completed", color: "#15803d", bg: "#dcfce7" },
-  cancelled: { label: "Cancelled", color: "#b91c1c", bg: "#fee2e2" },
-  partial:   { label: "Partial",   color: "#6d28d9", bg: "#ede9fe" },
+  pending:   { label: "Pending",   color: "#b45309", bg: "#fef3c7", darkBg: "#422006", darkColor: "#fde68a" },
+  completed: { label: "Completed", color: "#15803d", bg: "#dcfce7", darkBg: "#052e16", darkColor: "#86efac" },
+  cancelled: { label: "Cancelled", color: "#b91c1c", bg: "#fee2e2", darkBg: "#450a0a", darkColor: "#fca5a5" },
+  partial:   { label: "Partial",   color: "#6d28d9", bg: "#ede9fe", darkBg: "#2e1065", darkColor: "#c4b5fd" },
 };
 
 const StatusBadge = ({ status }) => {
@@ -28,10 +28,11 @@ const StatusBadge = ({ status }) => {
       fontWeight: 700,
       letterSpacing: "0.06em",
       textTransform: "uppercase",
-      padding: "3px 10px",
+      padding: "4px 10px",
       borderRadius: "20px",
-      background: meta.bg,
+      background: `color-mix(in srgb, ${meta.color} 15%, var(--color-surface-container-lowest))`,
       color: meta.color,
+      border: `1px solid color-mix(in srgb, ${meta.color} 30%, transparent)`,
     }}>
       {meta.label}
     </span>
@@ -285,9 +286,11 @@ const OrderHistory = () => {
 
   // ── Entrance animation ──────────────────────────────────────
   useEffect(() => {
+    const targets = [headerRef.current, searchRef.current].filter(Boolean);
+    if (!targets.length) return;
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        [headerRef.current, searchRef.current],
+        targets,
         { y: 20, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.1 }
       );
@@ -334,6 +337,7 @@ const OrderHistory = () => {
           max-width: 680px;
           margin: 0 auto;
           font-family: 'DM Sans', sans-serif;
+          padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
         }
 
         /* Header */
@@ -546,16 +550,16 @@ const OrderHistory = () => {
         .oh-del-btn {
           font-size: 12px;
           font-weight: 600;
-          color: #b91c1c;
-          background: #fee2e2;
-          border: none;
+          color: #dc2626;
+          background: color-mix(in srgb, #dc2626 12%, var(--color-surface-container-lowest));
+          border: 1.5px solid color-mix(in srgb, #dc2626 25%, transparent);
           border-radius: 6px;
           padding: 6px 14px;
           cursor: pointer;
           transition: background 0.15s;
           font-family: 'DM Sans', sans-serif;
         }
-        .oh-del-btn:hover:not(:disabled) { background: #fca5a5; }
+        .oh-del-btn:hover:not(:disabled) { background: color-mix(in srgb, #dc2626 22%, var(--color-surface-container-lowest)); }
         .oh-del-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Empty */
@@ -907,7 +911,7 @@ const OrderHistory = () => {
 
           /* Search label + pagination */
           .oh-search-label { margin: 10px 14px 0; }
-          .oh-pagination { padding: 0 14px; margin-top: 16px; }
+          .oh-pagination { padding: 0 14px; margin-top: 16px; margin-bottom: 4px; }
           .oh-empty { padding: 48px 20px; }
           .oh-loader { padding: 40px 20px; }
 
@@ -939,12 +943,7 @@ const OrderHistory = () => {
       `}</style>
 
       <div ref={wrapRef} className="oh-wrap">
-        {/* Header */}
-        <div ref={headerRef} className="oh-header">
-          <div className="oh-eyebrow">Order History</div>
-          <div className="oh-title">My Orders</div>
-          <div className="oh-sub">Track and manage all your submitted orders.</div>
-        </div>
+        
 
         {/* Search */}
         <div ref={searchRef} className="oh-search-wrap">
