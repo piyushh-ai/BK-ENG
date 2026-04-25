@@ -18,6 +18,5 @@ RUN npm install
 
 COPY --from=frontend-builder /app/dist /app
 
-EXPOSE 3000
 
 CMD ["node", "server.js"]
