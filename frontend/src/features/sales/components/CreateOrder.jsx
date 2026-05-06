@@ -12,6 +12,7 @@ const CreateOrder = ({ onSuccess }) => {
   const [partyName, setPartyName]     = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages]           = useState([]); // { file, preview }[]
+  const [pendingQueue, setPendingQueue] = useState([]); // { file, preview }[]
   const [error, setError]             = useState("");
   const [success, setSuccess]         = useState(false);
   const [compressing, setCompressing] = useState(false);
@@ -80,7 +81,7 @@ const CreateOrder = ({ onSuccess }) => {
 
   const handleImagePick = async (e) => {
     const files = Array.from(e.target.files || []);
-    const remaining = MAX_IMAGES - images.length;
+    const remaining = MAX_IMAGES - (images.length + pendingQueue.length);
     const toProcess = files.slice(0, remaining);
     if (!toProcess.length) return;
 
@@ -88,10 +89,12 @@ const CreateOrder = ({ onSuccess }) => {
     const compressed = await Promise.all(toProcess.map(compressImage));
     setCompressing(false);
 
-    setImages((prev) => [
-      ...prev,
-      ...compressed.map((file) => ({ file, preview: URL.createObjectURL(file) })),
-    ]);
+    const newPending = compressed.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    setPendingQueue((prev) => [...prev, ...newPending]);
     e.target.value = "";
   };
 
@@ -105,15 +108,45 @@ const CreateOrder = ({ onSuccess }) => {
   const openEditor = (idx) => setEditingIdx(idx);
   const closeEditor = () => setEditingIdx(null);
 
-  const handleSaveEdit = (newFile, newPreview) => {
+  const handleSaveEdit = (editedBlob) => {
     if (editingIdx === null) return;
-    URL.revokeObjectURL(images[editingIdx].preview);
-    setImages((im) => {
-      const next = [...im];
-      next[editingIdx] = { file: newFile, preview: newPreview };
-      return next;
+    setImages((prev) => {
+      const copy = [...prev];
+      URL.revokeObjectURL(copy[editingIdx].preview);
+
+      const oldFile = copy[editingIdx].file;
+      const newFile = new File([editedBlob], oldFile.name, {
+        type: editedBlob.type || "image/jpeg",
+        lastModified: Date.now(),
+      });
+
+      copy[editingIdx] = { file: newFile, preview: URL.createObjectURL(editedBlob) };
+      return copy;
     });
-    closeEditor();
+    setEditingIdx(null);
+  };
+
+  const handleSavePending = (editedBlob) => {
+    const current = pendingQueue[0];
+    const newFile = new File([editedBlob], current.file.name, {
+      type: editedBlob.type || "image/jpeg",
+      lastModified: Date.now(),
+    });
+
+    URL.revokeObjectURL(current.preview);
+
+    const finalizedImage = {
+      file: newFile,
+      preview: URL.createObjectURL(editedBlob),
+    };
+
+    setImages((prev) => [...prev, finalizedImage]);
+    setPendingQueue((prev) => prev.slice(1));
+  };
+
+  const handleCancelPending = () => {
+    URL.revokeObjectURL(pendingQueue[0].preview);
+    setPendingQueue((prev) => prev.slice(1));
   };
 
   // Cleanup object URLs on unmount
@@ -319,13 +352,23 @@ const CreateOrder = ({ onSuccess }) => {
         </button>
       </form>
 
-      {/* Image Editor Modal */}
-      {editingIdx !== null && (
+      {/* Image Editor Modal for Existing Images */}
+      {editingIdx !== null && pendingQueue.length === 0 && (
         <EditImage
           src={images[editingIdx].preview}
           originalName={images[editingIdx].file.name}
           onSave={handleSaveEdit}
           onCancel={closeEditor}
+        />
+      )}
+
+      {/* Image Editor Modal for Pending Uploads */}
+      {pendingQueue.length > 0 && (
+        <EditImage
+          src={pendingQueue[0].preview}
+          originalName={pendingQueue[0].file.name}
+          onSave={handleSavePending}
+          onCancel={handleCancelPending}
         />
       )}
     </div>
