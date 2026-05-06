@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useSales } from "../hooks/useSales";
 import { useSelector } from "react-redux";
+import EditImage from "./EditImage";
 
 const MAX_IMAGES = 7;
 
@@ -15,6 +16,8 @@ const CreateOrder = ({ onSuccess }) => {
   const [success, setSuccess]         = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [uploadPct, setUploadPct]     = useState(0); // 0-100 during upload
+
+  const [editingIdx, setEditingIdx] = useState(null);
 
   const cardRef      = useRef(null);
   const fileInputRef = useRef(null);
@@ -97,6 +100,20 @@ const CreateOrder = ({ onSuccess }) => {
       URL.revokeObjectURL(prev[idx].preview);
       return prev.filter((_, i) => i !== idx);
     });
+  };
+
+  const openEditor = (idx) => setEditingIdx(idx);
+  const closeEditor = () => setEditingIdx(null);
+
+  const handleSaveEdit = (newFile, newPreview) => {
+    if (editingIdx === null) return;
+    URL.revokeObjectURL(images[editingIdx].preview);
+    setImages((im) => {
+      const next = [...im];
+      next[editingIdx] = { file: newFile, preview: newPreview };
+      return next;
+    });
+    closeEditor();
   };
 
   // Cleanup object URLs on unmount
@@ -241,11 +258,32 @@ const CreateOrder = ({ onSuccess }) => {
               <div className="co-img-grid">
                 {images.map(({ preview }, idx) => (
                   <div key={idx} className="co-img-thumb">
-                    <img src={preview} alt={`preview-${idx}`} loading="lazy" />
+                    <img
+                      src={preview}
+                      alt={`preview-${idx}`}
+                      loading="lazy"
+                      onClick={() => openEditor(idx)}
+                      style={{ cursor: "pointer" }}
+                    />
+                    <button
+                      type="button"
+                      className="co-img-edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditor(idx);
+                      }}
+                      title="Edit"
+                      disabled={isSubmitting}
+                    >
+                      ✎
+                    </button>
                     <button
                       type="button"
                       className="co-img-remove"
-                      onClick={() => removeImage(idx)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImage(idx);
+                      }}
                       title="Remove"
                       disabled={isSubmitting}
                     >
@@ -280,6 +318,16 @@ const CreateOrder = ({ onSuccess }) => {
           )}
         </button>
       </form>
+
+      {/* Image Editor Modal */}
+      {editingIdx !== null && (
+        <EditImage
+          src={images[editingIdx].preview}
+          originalName={images[editingIdx].file.name}
+          onSave={handleSaveEdit}
+          onCancel={closeEditor}
+        />
+      )}
     </div>
   );
 };

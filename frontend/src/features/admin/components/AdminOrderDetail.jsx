@@ -66,7 +66,7 @@ const navBtnStyle = {
 /* ─────────────────────────────────────────────
    WhatsApp-style Image Viewer (portal)
 ───────────────────────────────────────────── */
-const ImageViewer = ({ isOpen, onClose, images, startIndex }) => {
+const ImageViewer = ({ isOpen, onClose, images, startIndex, isDesktop }) => {
   const [currentIdx, setCurrentIdx] = useState(startIndex || 0);
   const [loaded, setLoaded] = useState(false);
   const [dragStart, setDragStart] = useState(null);
@@ -124,7 +124,7 @@ const ImageViewer = ({ isOpen, onClose, images, startIndex }) => {
       ref={overlayRef}
       style={{
         position: "fixed", inset: 0, zIndex: 99999999,
-        background: "#000", display: "flex", flexDirection: "column",
+        background: "#0a0a0a",
         touchAction: "pan-y",
       }}
       onTouchStart={onTouchStart}
@@ -132,36 +132,65 @@ const ImageViewer = ({ isOpen, onClose, images, startIndex }) => {
     >
       {/* Top bar */}
       <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, zIndex: 10,
-        padding: "48px 16px 16px",
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)",
+        position: "absolute", top: 0, left: 0, right: 0, zIndex: 20,
+        padding: isDesktop ? "16px 24px" : "48px 16px 16px",
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
+        pointerEvents: "none",
       }}>
         <button onClick={onClose} style={{
-          width: 40, height: 40, borderRadius: "50%",
-          background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)",
-          border: "none", color: "#fff", fontSize: 22, cursor: "pointer",
+          width: isDesktop ? 44 : 40, height: isDesktop ? 44 : 40,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          color: "#fff", fontSize: isDesktop ? 24 : 22,
+          cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-        }}>‹</button>
+          pointerEvents: "auto",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+          e.currentTarget.style.transform = "scale(1.05)";
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+          e.currentTarget.style.transform = "scale(1)";
+        }}
+        >‹</button>
 
         {images.length > 1 && (
           <span style={{
-            color: "#fff", fontSize: 14, fontWeight: 700,
-            background: "rgba(0,0,0,0.4)", padding: "4px 14px",
-            borderRadius: 20, backdropFilter: "blur(6px)",
+            color: "#fff", fontSize: 13, fontWeight: 700,
+            background: "rgba(0,0,0,0.5)", padding: "6px 16px",
+            borderRadius: 20, backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            letterSpacing: "0.04em",
           }}>
             {currentIdx + 1} / {images.length}
           </span>
         )}
 
-        {/* Download button — RN WebView safe */}
         <button
           onClick={() => downloadImage(currentUrl)}
           style={{
-            width: 40, height: 40, borderRadius: "50%",
-            background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)",
-            border: "none", color: "#fff", fontSize: 18, cursor: "pointer",
+            width: isDesktop ? 44 : 40, height: isDesktop ? 44 : 40,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "#fff", fontSize: isDesktop ? 20 : 18,
+            cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
+            pointerEvents: "auto",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+            e.currentTarget.style.transform = "scale(1.05)";
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+            e.currentTarget.style.transform = "scale(1)";
           }}
         >↓</button>
       </div>
@@ -169,14 +198,30 @@ const ImageViewer = ({ isOpen, onClose, images, startIndex }) => {
       {/* Main image */}
       <div
         style={{
-          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "80px 0 100px",
+          position: "absolute",
+          top: isDesktop ? 0 : 60,
+          bottom: isDesktop ? (images.length > 1 ? 76 : 0) : (images.length > 1 ? 76 : 0),
+          left: 0,
+          right: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1,
         }}
         onClick={onClose}
       >
         {!loaded && (
-          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, fontWeight: 600 }}>
-            Loading…
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            <div style={{
+              width: 40, height: 40,
+              border: "3px solid rgba(255,255,255,0.1)",
+              borderTopColor: "rgba(255,255,255,0.8)",
+              borderRadius: "50%",
+              animation: "aodSpin 0.8s linear infinite",
+            }} />
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 600, letterSpacing: "0.02em" }}>
+              Loading…
+            </div>
           </div>
         )}
         <img
@@ -186,17 +231,150 @@ const ImageViewer = ({ isOpen, onClose, images, startIndex }) => {
           onLoad={() => setLoaded(true)}
           onClick={(e) => e.stopPropagation()}
           style={{
-            maxWidth: "100%", maxHeight: "100%", objectFit: "contain",
-            display: loaded ? "block" : "none", userSelect: "none",
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+            display: loaded ? "block" : "none",
+            userSelect: "none",
+            transition: "opacity 0.25s, transform 0.35s cubic-bezier(0.22,1,0.36,1)",
+            opacity: loaded ? 1 : 0,
           }}
         />
       </div>
 
-      {/* Bottom nav */}
-      {images.length > 1 && (
+      {/* Desktop side arrows */}
+      {isDesktop && images.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+              e.currentTarget.style.transform = "translateY(-50%) scale(1.08)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+            }}
+            style={{
+              ...navBtnStyle,
+              position: "absolute",
+              left: 24,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 10,
+              width: 52,
+              height: 52,
+              background: "rgba(255,255,255,0.12)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              transition: "all 0.2s",
+            }}
+          >
+            ‹
+          </button>
+          <button
+            onClick={next}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+              e.currentTarget.style.transform = "translateY(-50%) scale(1.08)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+            }}
+            style={{
+              ...navBtnStyle,
+              position: "absolute",
+              right: 24,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 10,
+              width: 52,
+              height: 52,
+              background: "rgba(255,255,255,0.12)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              transition: "all 0.2s",
+            }}
+          >
+            ›
+          </button>
+        </>
+      )}
+
+      {/* Desktop thumbnail strip */}
+      {isDesktop && images.length > 1 && (
         <div
           style={{
-            position: "absolute", bottom: 0, left: 0, right: 0,
+            position: "absolute",
+            bottom: 0, left: 0, right: 0, zIndex: 20,
+            padding: "12px 24px 20px",
+            background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 10,
+            pointerEvents: "none",
+          }}
+        >
+          <div style={{
+            display: "flex", gap: 8,
+            pointerEvents: "auto",
+            overflowX: "auto",
+            padding: "4px",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          }}>
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => { setLoaded(false); setCurrentIdx(i); }}
+                style={{
+                  width: 48, height: 48,
+                  borderRadius: 8,
+                  border: i === currentIdx
+                    ? "2px solid #fff"
+                    : "2px solid transparent",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  padding: 0,
+                  background: "#1a1a1a",
+                  opacity: i === currentIdx ? 1 : 0.5,
+                  transform: i === currentIdx ? "scale(1.12)" : "scale(1)",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={e => {
+                  if (i !== currentIdx) {
+                    e.currentTarget.style.opacity = "0.85";
+                    e.currentTarget.style.transform = "scale(1.08)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (i !== currentIdx) {
+                    e.currentTarget.style.opacity = "0.5";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }
+                }}
+              >
+                <img
+                  src={img.url}
+                  alt=""
+                  style={{
+                    width: "100%", height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile bottom nav */}
+      {images.length > 1 && !isDesktop && (
+        <div
+          style={{
+            position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 20,
             padding: "16px 20px 36px",
             background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
@@ -354,7 +532,7 @@ const InfoBlock = ({ order, isDesktop, onImageClick }) => {
 ───────────────────────────────────────────── */
 const ActionBlock = ({ isDesktop,newStatus,setNewStatus,remark,setRemark,isUpdating,saveSuccess,onSave,onDelete }) => (
   <div style={{ background:"var(--color-surface-container-lowest)",borderRadius:20,border:"1.5px solid var(--color-outline-variant)",overflow:"hidden" }}>
-    <style>{`@keyframes aodOverlay{from{opacity:0}to{opacity:1}}`}</style>
+    <style>{`@keyframes aodOverlay{from{opacity:0}to{opacity:1}}@keyframes aodSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}`}</style>
     {/* Status */}
     <div style={{ padding:"16px 16px 12px" }}>
       <div style={{ fontSize:10,fontWeight:800,color:"var(--color-outline)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12,fontFamily:"'DM Sans',sans-serif" }}>Update Status</div>
@@ -680,6 +858,7 @@ const AdminOrderDetail = () => {
           onClose={() => setViewerOpen(false)}
           images={order.images || []}
           startIndex={viewerStart}
+          isDesktop={isDesktop}
         />
       </div>
     );
@@ -746,6 +925,7 @@ const AdminOrderDetail = () => {
         onClose={() => setViewerOpen(false)}
         images={order.images || []}
         startIndex={viewerStart}
+        isDesktop={isDesktop}
       />
     </div>
   );
