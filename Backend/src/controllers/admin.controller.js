@@ -1,5 +1,6 @@
 import salesOrderModel from "../models/salesOrder.model.js";
 import { buildPagination, destroyCloudinaryImages } from "./salesOrder.controller.js";
+import xlsx from "xlsx";
 
 // ═════════════════════════════════════════════════════════════
 // GET ALL ORDERS  (admin only)
@@ -148,5 +149,66 @@ export const searchOrdersAdmin = async (req, res) => {
   } catch (error) {
     console.error("Error in searchOrdersAdmin:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ═════════════════════════════════════════════════════════════
+// EXPORT ALL ORDERS TO EXCEL (admin only)
+// GET /api/admin/export
+// Access: Private (admin)
+// ═════════════════════════════════════════════════════════════
+export const exportReport = async (req, res) => {
+  try {
+    const orders = await salesOrderModel
+      .find()
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const excelData = orders.map((order, index) => {
+      return {
+        "S.No": index + 1,
+        "Order ID": order._id.toString(),
+        "Party Name": order.partyName || "",
+        "Salesman": order.user ? order.user.name : "Unknown",
+        "Salesman Email": order.user ? order.user.email : "",
+        "Status": order.status || "pending",
+        "Description": order.description || "",
+        "Remark": order.remark || "",
+        "Images Count": order.images ? order.images.length : 0,
+        "Created At": new Date(order.createdAt).toLocaleString("en-IN"),
+        "Updated At": new Date(order.updatedAt).toLocaleString("en-IN"),
+      };
+    });
+
+    const worksheet = xlsx.utils.json_to_sheet(excelData);
+    
+    // Auto-fit columns
+    const colWidths = [
+      { wch: 6 },  // S.No
+      { wch: 26 }, // Order ID
+      { wch: 30 }, // Party Name
+      { wch: 20 }, // Salesman
+      { wch: 25 }, // Salesman Email
+      { wch: 12 }, // Status
+      { wch: 40 }, // Description
+      { wch: 40 }, // Remark
+      { wch: 12 }, // Images Count
+      { wch: 20 }, // Created At
+      { wch: 20 }, // Updated At
+    ];
+    worksheet["!cols"] = colWidths;
+
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Orders");
+
+    const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader("Content-Disposition", 'attachment; filename="orders_report.xlsx"');
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    return res.status(200).send(buffer);
+  } catch (error) {
+    console.error("Error exporting report:", error);
+    return res.status(500).json({ message: "Internal server error during export" });
   }
 };

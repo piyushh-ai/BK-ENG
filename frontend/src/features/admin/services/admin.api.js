@@ -86,6 +86,18 @@ export const deleteOrderAdmin = async (id) => {
     }
 };
 
+export const exportReportAdmin = async () => {
+    try {
+        const response = await adminApiInstance.get(`/export`, {
+            responseType: 'blob',
+            cache: false
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export const updateFCMToken = async (fcmToken) => {
     try {
         const response = await axios.post("/api/auth/fcm-token", { fcmToken }, {

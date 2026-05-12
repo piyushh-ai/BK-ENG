@@ -11,7 +11,7 @@
       host: true,
       proxy: {
         "/api": {
-          target: productionUrl,
+          target: developmentUrl,
           changeOrigin: true,
           secure: false,
         },

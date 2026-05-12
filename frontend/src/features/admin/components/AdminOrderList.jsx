@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import { gsap } from "gsap";
+import { exportReportAdmin } from "../services/admin.api";
 
 /* ─────────────────────────────────────────────
    Status Config
@@ -821,16 +822,36 @@ const AdminOrderList = () => {
   const [viewMode, setViewMode] = useState("grouped_salesman");
   const [sortOrder, setSortOrder] = useState("date_desc");
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "error" });
 
-  const [showDeleteBanner, setShowDeleteBanner] = useState(() => {
-    const lastHidden = localStorage.getItem("hideDeleteBannerDate");
-    if (lastHidden && lastHidden === new Date().toDateString()) return false;
-    return true;
-  });
-  const hideBanner = () => {
-    localStorage.setItem("hideDeleteBannerDate", new Date().toDateString());
-    setShowDeleteBanner(false);
+  const showToast = (message, type = "error") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast({ message: "", type: "error" });
+    }, 3000);
   };
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await exportReportAdmin();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "orders_report.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showToast("Report exported successfully!", "success");
+    } catch (error) {
+      console.error("Export failed", error);
+      showToast("Failed to export report. Please try again.", "error");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
 
   const [searchParams] = useSearchParams();
   const highlightOrderId = searchParams.get("orderId");
@@ -924,11 +945,6 @@ const AdminOrderList = () => {
     (sortOrder !== "date_desc" ? 1 : 0) +
     (filterStatus !== "all" ? 1 : 0);
 
-  const nextDeleteDate = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth() + 1,
-    0,
-  );
 
   const SearchBar = () => (
     <div style={{ position: "relative" }}>
@@ -1300,101 +1316,35 @@ const AdminOrderList = () => {
     ];
     return (
       <div style={{ width: "100%", padding: "0 0 48px" }}>
-        {showDeleteBanner && (
-          <div
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Orders</h2>
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
             style={{
-              background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
-              border: "1px solid #fecdd3",
-              borderRadius: 12,
-              padding: "12px 16px",
-              marginBottom: 16,
+              padding: "8px 16px",
+              background: "#10b981",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: isExporting ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              boxShadow: "0 2px 8px rgba(225,29,72,0.04)",
-              position: "relative",
+              gap: 6,
+              opacity: isExporting ? 0.7 : 1,
+              boxShadow: "0 2px 6px rgba(16,185,129,0.2)"
             }}
           >
-            <button
-              onClick={hideBanner}
-              style={{
-                position: "absolute",
-                top: 12,
-                right: 12,
-                background: "transparent",
-                border: "none",
-                color: "#f43f5e",
-                cursor: "pointer",
-                padding: 4,
-              }}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "#f43f5e",
-                color: "#fff",
-                display: "grid",
-                placeItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            </div>
-            <div style={{ flex: 1, paddingRight: 30 }}>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 800,
-                  color: "#be123c",
-                  marginBottom: 2,
-                }}
-              >
-                System Auto-Cleanup Notice
-              </div>
-              <div style={{ fontSize: 12, color: "#9f1239", fontWeight: 500 }}>
-                All orders and attached images will be permanently deleted on{" "}
-                <strong>
-                  {nextDeleteDate.toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}{" "}
-                  at 11:55 PM
-                </strong>
-                .
-              </div>
-            </div>
-          </div>
-        )}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            {isExporting ? "Exporting..." : "Export Report"}
+          </button>
+        </div>
 
         {!loading && allOrders?.length > 0 && (
           <StatsBar allOrders={allOrders} isMobile={false} />
@@ -1498,6 +1448,42 @@ const AdminOrderList = () => {
         ) : (
           <OrderGrid />
         )}
+
+        {/* Desktop Toast Notification */}
+        {toast.message && (
+          <div style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: toast.type === "success" ? "#10b981" : "#be123c",
+            color: "#fff",
+            padding: "12px 24px",
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 600,
+            boxShadow: toast.type === "success" ? "0 4px 12px rgba(16,185,129,0.3)" : "0 4px 12px rgba(225,29,72,0.3)",
+            zIndex: 9999,
+            animation: "dropdownIn 0.2s ease forwards",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            {toast.type === "success" ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            )}
+            {toast.message}
+          </div>
+        )}
       </div>
     );
   }
@@ -1505,108 +1491,35 @@ const AdminOrderList = () => {
   /* ── MOBILE ── */
   return (
     <div style={{ width: "100%", padding: "0 0 40px" }}>
-      {/* Delete banner */}
-      {showDeleteBanner && (
-        <div
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Orders</h2>
+        <button
+          onClick={handleExport}
+          disabled={isExporting}
           style={{
-            background: "linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)",
-            border: "1px solid #fecdd3",
-            borderRadius: 14,
-            padding: "12px 14px",
-            marginBottom: 14,
+            padding: "8px 14px",
+            background: "#10b981",
+            color: "#fff",
+            border: "none",
+            borderRadius: 10,
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: isExporting ? "not-allowed" : "pointer",
             display: "flex",
-            alignItems: "flex-start",
-            gap: 10,
-            position: "relative",
+            alignItems: "center",
+            gap: 6,
+            opacity: isExporting ? 0.7 : 1,
+            boxShadow: "0 2px 6px rgba(16,185,129,0.2)"
           }}
         >
-          <button
-            onClick={hideBanner}
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              background: "transparent",
-              border: "none",
-              color: "#f43f5e",
-              cursor: "pointer",
-              padding: 4,
-            }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-          <div
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              background: "#f43f5e",
-              color: "#fff",
-              display: "grid",
-              placeItems: "center",
-              flexShrink: 0,
-              marginTop: 1,
-            }}
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </div>
-          <div style={{ paddingRight: 20 }}>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: "#be123c",
-                marginBottom: 3,
-              }}
-            >
-              Auto-Delete Scheduled
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "#9f1239",
-                fontWeight: 500,
-                lineHeight: 1.4,
-              }}
-            >
-              All orders deleted on{" "}
-              <strong>
-                {nextDeleteDate.toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </strong>{" "}
-              at 11:55 PM.
-            </div>
-          </div>
-        </div>
-      )}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          {isExporting ? "Exporting..." : "Export Report"}
+        </button>
+      </div>
 
       {/* Stats */}
       {!loading && allOrders?.length > 0 && (
@@ -1737,6 +1650,46 @@ const AdminOrderList = () => {
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
       />
+
+      {/* Mobile Toast Notification */}
+      {toast.message && (
+        <div style={{
+          position: "fixed",
+          bottom: 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: toast.type === "success" ? "#10b981" : "#be123c",
+          color: "#fff",
+          padding: "10px 16px",
+          borderRadius: 12,
+          fontSize: 13,
+          fontWeight: 600,
+          boxShadow: toast.type === "success" ? "0 4px 12px rgba(16,185,129,0.3)" : "0 4px 12px rgba(225,29,72,0.3)",
+          zIndex: 9999,
+          animation: "dropdownIn 0.2s ease forwards",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          width: "max-content",
+          maxWidth: "90vw",
+          textAlign: "left",
+          lineHeight: 1.4,
+        }}>
+          {toast.type === "success" ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 };

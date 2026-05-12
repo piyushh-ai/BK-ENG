@@ -5,7 +5,8 @@ import {
   updateOrderStatus,
   getOrderByIdAdmin,
   deleteOrderAdmin,
-  searchOrdersAdmin
+  searchOrdersAdmin,
+  exportReport
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -23,6 +24,12 @@ router.get("/all", adminAuth, getAllOrders);
  * Search orders globally
  */
 router.get("/search", adminAuth, searchOrdersAdmin);
+
+/**
+ * GET /api/admin/export
+ * Export all orders to Excel
+ */
+router.get("/export", adminAuth, exportReport);
 
 /**
  * GET /api/admin/orders/:id

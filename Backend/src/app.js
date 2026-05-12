@@ -8,7 +8,6 @@ import salesOrderRouter from "./routes/salesOrder.route.js";
 import adminRouter from "./routes/admin.routes.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initCronJobs } from "./services/cron.service.js";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -18,9 +17,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
-// Initialize scheduled background tasks
-initCronJobs();
 
 // Required for ECS + ALB: trust the load balancer's forwarded headers
 app.set("trust proxy", 1);
