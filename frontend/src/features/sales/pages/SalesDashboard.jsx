@@ -10,7 +10,13 @@ import Pagination from "../components/Pagination";
 import OverviewSection from "../components/OverviewSection";
 import SheetBar from "../components/SheetBar";
 
-import { getCompanySheets, getCompanyStock, getBoschStock, masterSearch, normalizeError } from "../services/sales.api";
+import {
+  getCompanySheets,
+  getCompanyStock,
+  getBoschStock,
+  masterSearch,
+  normalizeError,
+} from "../services/sales.api";
 
 function useDebounce(value, delay = 380) {
   const [debounced, setDebounced] = useState(value);
@@ -50,19 +56,30 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
   const sheetParam = searchParams.get("sheet");
   const selectedSheet = sheetParam
     ? sheets.find((s) => (s.sheetName || s) === sheetParam) || sheetParam
-    : sheets.length > 0 ? sheets[0] : null;
+    : sheets.length > 0
+      ? sheets[0]
+      : null;
 
   useEffect(() => {
-    if (!debouncedMaster.trim()) { setMasterResults([]); return; }
+    if (!debouncedMaster.trim()) {
+      setMasterResults([]);
+      return;
+    }
     const ctrl = new AbortController();
     const run = async () => {
       setMasterLoading(true);
       try {
-        const d = await masterSearch({ search: debouncedMaster, limit: 12 }, ctrl.signal);
+        const d = await masterSearch(
+          { search: debouncedMaster, limit: 12 },
+          ctrl.signal,
+        );
         setMasterResults(d.results || []);
       } catch (e) {
-        if (e?.name !== "CanceledError" && e?.name !== "AbortError") console.error(e);
-      } finally { setMasterLoading(false); }
+        if (e?.name !== "CanceledError" && e?.name !== "AbortError")
+          console.error(e);
+      } finally {
+        setMasterLoading(false);
+      }
     };
     run();
     return () => ctrl.abort();
@@ -79,49 +96,82 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
         if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
           setNetworkError(normalizeError(e));
         }
-      } finally { setSheetsLoading(false); }
+      } finally {
+        setSheetsLoading(false);
+      }
     };
     load();
     return () => ctrl.abort();
   }, []);
 
-  useEffect(() => { setPage(1); }, [debouncedSearch, selectedSheet, activeTab]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, selectedSheet, activeTab]);
 
   useEffect(() => {
-    if (activeTab !== "company" && activeTab !== "bosch") { setStockLoading(false); return; }
+    if (activeTab !== "company" && activeTab !== "bosch") {
+      setStockLoading(false);
+      return;
+    }
     const ctrl = new AbortController();
     const load = async () => {
-      setStockLoading(true); setStock([]); setNetworkError("");
+      setStockLoading(true);
+      setStock([]);
+      setNetworkError("");
       try {
         let data;
         if (activeTab === "company" && selectedSheet) {
-          const sn = typeof selectedSheet === "string" ? selectedSheet : selectedSheet.sheetName;
-          data = await getCompanyStock(sn, { page, limit: LIMIT, search: debouncedSearch }, ctrl.signal);
+          const sn =
+            typeof selectedSheet === "string"
+              ? selectedSheet
+              : selectedSheet.sheetName;
+          data = await getCompanyStock(
+            sn,
+            { page, limit: LIMIT, search: debouncedSearch },
+            ctrl.signal,
+          );
         } else if (activeTab === "bosch") {
-          data = await getBoschStock({ page, limit: LIMIT, search: debouncedSearch }, ctrl.signal);
+          data = await getBoschStock(
+            { page, limit: LIMIT, search: debouncedSearch },
+            ctrl.signal,
+          );
         }
-        if (data) { setStock(data.boschStock || data.companyStock || []); setPagination(data.pagination || null); }
+        if (data) {
+          setStock(data.boschStock || data.companyStock || []);
+          setPagination(data.pagination || null);
+        }
       } catch (e) {
         if (e?.name !== "CanceledError" && e?.name !== "AbortError") {
           setNetworkError(normalizeError(e));
         }
-      } finally { setStockLoading(false); }
+      } finally {
+        setStockLoading(false);
+      }
     };
     load();
     return () => ctrl.abort();
   }, [activeTab, selectedSheet, page, debouncedSearch]);
 
-  const handleTabChange = useCallback((t) => {
-    navigate(adminTab ? `/admin/${t}` : `/sales/${t}`);
-    setSearchInput(""); setPage(1);
-    // Force OrderHistory to remount & refetch when navigating to history
-    if (t === "history") setHistoryKey((k) => k + 1);
-  }, [adminTab, navigate]);
+  const handleTabChange = useCallback(
+    (t) => {
+      navigate(adminTab ? `/admin/${t}` : `/sales/${t}`);
+      setSearchInput("");
+      setPage(1);
+      // Force OrderHistory to remount & refetch when navigating to history
+      if (t === "history") setHistoryKey((k) => k + 1);
+    },
+    [adminTab, navigate],
+  );
 
-  const handleSheetSelect = useCallback((sheet) => {
-    const name = typeof sheet === "string" ? sheet : sheet.sheetName;
-    setSearchParams({ sheet: name }); setSearchInput(""); setPage(1);
-  }, [setSearchParams]);
+  const handleSheetSelect = useCallback(
+    (sheet) => {
+      const name = typeof sheet === "string" ? sheet : sheet.sheetName;
+      setSearchParams({ sheet: name });
+      setSearchInput("");
+      setPage(1);
+    },
+    [setSearchParams],
+  );
 
   const isStockTab = activeTab === "company" || activeTab === "bosch";
 
@@ -154,9 +204,9 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
         .sd-sheet-picker-selected{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
         .sd-sheet-picker-meta{font-size:11px;color:var(--color-outline);font-weight:500;flex-shrink:0;}
         .sd-sheet-picker-arrow{font-size:13px;color:var(--color-outline);flex-shrink:0;}
-        .sd-drawer-overlay{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:sdOverlayIn 0.22s ease both;}
+        .sd-drawer-overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:sdOverlayIn 0.22s ease both;}
         .sd-drawer-overlay.open{display:block;}
-        .sd-sheet-drawer{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--color-surface-container-lowest);border-radius:24px 24px 0 0;padding:0 0 env(safe-area-inset-bottom,16px);box-shadow:0 -8px 40px rgba(0,0,0,0.18);max-height:82svh;display:flex;flex-direction:column;animation:sdDrawerUp 0.32s cubic-bezier(0.32,0.72,0,1) both;}
+        .sd-sheet-drawer{position:fixed;bottom:calc(58px + env(safe-area-inset-bottom,0px));left:0;right:0;z-index:10001;background:var(--color-surface-container-lowest);border-radius:24px 24px 0 0;padding:0 0 16px;box-shadow:0 -8px 40px rgba(0,0,0,0.18);max-height:calc(82svh - 68px);display:flex;flex-direction:column;animation:sdDrawerUp 0.32s cubic-bezier(0.32,0.72,0,1) both;}
         .sd-drawer-handle{width:36px;height:4px;border-radius:2px;background:var(--color-outline-variant);margin:12px auto 0;flex-shrink:0;}
         .sd-drawer-header{padding:16px 20px 12px;border-bottom:1px solid var(--color-outline-variant);flex-shrink:0;}
         .sd-drawer-title{font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;color:var(--color-on-surface);margin-bottom:12px;}
@@ -260,12 +310,17 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
       `}</style>
 
       <div className="sd-root" style={hideNavbar ? { minHeight: "auto" } : {}}>
-        {!hideNavbar && <SalesNavbar activeTab={activeTab} onTabChange={handleTabChange} />}
+        {!hideNavbar && (
+          <SalesNavbar activeTab={activeTab} onTabChange={handleTabChange} />
+        )}
 
         {networkError && (
           <div className="sd-net-error" role="alert">
             <span>⚠️ {networkError}</span>
-            <button className="sd-net-reload" onClick={() => window.location.reload()}>
+            <button
+              className="sd-net-reload"
+              onClick={() => window.location.reload()}
+            >
               Reload Page
             </button>
           </div>
@@ -276,14 +331,14 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
             <div className="sd-page-header">
               <h1 className="sd-page-title">
                 {activeTab === "company" && "Company Stock"}
-                {activeTab === "bosch"   && "Bosch Stock"}
-                {activeTab === "orders"  && "New Order"}
+                {activeTab === "bosch" && "Bosch Stock"}
+                {activeTab === "orders" && "New Order"}
                 {activeTab === "history" && "Order History"}
               </h1>
               <p className="sd-page-sub">
                 {activeTab === "company" && "Browse company inventory sheets"}
-                {activeTab === "bosch"   && "Search Bosch parts"}
-                {activeTab === "orders"  && "Punch a new sales order"}
+                {activeTab === "bosch" && "Search Bosch parts"}
+                {activeTab === "orders" && "Punch a new sales order"}
                 {activeTab === "history" && "View all past orders"}
               </p>
             </div>
@@ -292,10 +347,14 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
           {/* ── OVERVIEW ── */}
           {activeTab === "overview" && (
             <OverviewSection
-              sheets={sheets} sheetsLoading={sheetsLoading}
-              masterQuery={masterQuery} setMasterQuery={setMasterQuery}
-              masterResults={masterResults} masterLoading={masterLoading}
-              handleTabChange={handleTabChange} handleSheetSelect={handleSheetSelect}
+              sheets={sheets}
+              sheetsLoading={sheetsLoading}
+              masterQuery={masterQuery}
+              setMasterQuery={setMasterQuery}
+              masterResults={masterResults}
+              masterLoading={masterLoading}
+              handleTabChange={handleTabChange}
+              handleSheetSelect={handleSheetSelect}
               setSearchInput={setSearchInput}
             />
           )}
@@ -305,47 +364,99 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
             <>
               {activeTab === "company" && (
                 <SheetBar
-                  sheets={sheets} sheetsLoading={sheetsLoading}
-                  selectedSheet={selectedSheet} onSheetSelect={handleSheetSelect}
+                  sheets={sheets}
+                  sheetsLoading={sheetsLoading}
+                  selectedSheet={selectedSheet}
+                  onSheetSelect={handleSheetSelect}
                 />
               )}
 
               {/* Controls */}
-              <div className={`sd-controls${activeTab === "bosch" ? " no-sheet-bar" : ""}`}>
+              <div
+                className={`sd-controls${activeTab === "bosch" ? " no-sheet-bar" : ""}`}
+              >
                 <div className="sd-search-wrap">
                   <span className="sd-search-icon">🔍</span>
                   <input
-                    ref={searchRef} id="sd-search-input" className="sd-search" type="text"
-                    placeholder="Search part no, name…" value={searchInput}
+                    ref={searchRef}
+                    id="sd-search-input"
+                    className="sd-search"
+                    type="text"
+                    placeholder="Search part no, name…"
+                    value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                   />
                   {searchInput && (
-                    <button className="sd-search-clear" id="sd-search-clear"
-                      onClick={() => { setSearchInput(""); searchRef.current?.focus(); }}>✕</button>
+                    <button
+                      className="sd-search-clear"
+                      id="sd-search-clear"
+                      onClick={() => {
+                        setSearchInput("");
+                        searchRef.current?.focus();
+                      }}
+                    >
+                      ✕
+                    </button>
                   )}
                 </div>
                 {pagination && (
                   <span className="sd-result-count">
-                    {pagination.totalDocuments}{debouncedSearch ? ` for "${debouncedSearch}"` : " items"}
+                    {pagination.totalDocuments}
+                    {debouncedSearch ? ` for "${debouncedSearch}"` : " items"}
                   </span>
                 )}
                 <div className="sd-view-toggle">
-                  <button className={`sd-view-btn${mobileView === "grid" ? " active" : ""}`} onClick={() => setMobileView("grid")} title="Grid view">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+                  <button
+                    className={`sd-view-btn${mobileView === "grid" ? " active" : ""}`}
+                    onClick={() => setMobileView("grid")}
+                    title="Grid view"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <rect x="1" y="1" width="6" height="6" rx="1.5" />
+                      <rect x="9" y="1" width="6" height="6" rx="1.5" />
+                      <rect x="1" y="9" width="6" height="6" rx="1.5" />
+                      <rect x="9" y="9" width="6" height="6" rx="1.5" />
+                    </svg>
                   </button>
-                  <button className={`sd-view-btn${mobileView === "list" ? " active" : ""}`} onClick={() => setMobileView("list")} title="List view">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="14" height="3" rx="1.5"/><rect x="1" y="6.5" width="14" height="3" rx="1.5"/><rect x="1" y="11" width="14" height="3" rx="1.5"/></svg>
+                  <button
+                    className={`sd-view-btn${mobileView === "list" ? " active" : ""}`}
+                    onClick={() => setMobileView("list")}
+                    title="List view"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <rect x="1" y="2" width="14" height="3" rx="1.5" />
+                      <rect x="1" y="6.5" width="14" height="3" rx="1.5" />
+                      <rect x="1" y="11" width="14" height="3" rx="1.5" />
+                    </svg>
                   </button>
                 </div>
               </div>
 
               {/* Grid */}
-              <div className={`sd-grid${mobileView === "list" ? " list-view" : ""}`}>
-                {stockLoading
-                  ? Array.from({ length: LIMIT }).map((_, i) => <SkeletonCard key={i} />)
-                  : stock.length === 0
-                  ? <EmptyState search={debouncedSearch} />
-                  : stock.map((item) => <ProductCard key={item._id} item={item} />)}
+              <div
+                className={`sd-grid${mobileView === "list" ? " list-view" : ""}`}
+              >
+                {stockLoading ? (
+                  Array.from({ length: LIMIT }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))
+                ) : stock.length === 0 ? (
+                  <EmptyState search={debouncedSearch} />
+                ) : (
+                  stock.map((item) => (
+                    <ProductCard key={item._id} item={item} />
+                  ))
+                )}
               </div>
 
               {!stockLoading && (
@@ -356,7 +467,9 @@ const SalesDashboard = ({ hideNavbar = false, adminTab = null }) => {
             </>
           )}
 
-          {activeTab === "orders"  && <CreateOrder onSuccess={() => handleTabChange("history")} />}
+          {activeTab === "orders" && (
+            <CreateOrder onSuccess={() => handleTabChange("history")} />
+          )}
           {activeTab === "history" && <OrderHistory key={historyKey} />}
         </div>
       </div>
