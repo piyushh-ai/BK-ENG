@@ -69,6 +69,9 @@ const MobileFilterDrawer = ({
   setSortOrder,
   filterStatus,
   setFilterStatus,
+  dateFilter,
+  setDateFilter,
+  onApplyDate,
 }) => {
   const drawerRef = useRef(null);
 
@@ -118,7 +121,15 @@ const MobileFilterDrawer = ({
   const activeCount =
     (viewMode !== "grouped_salesman" ? 1 : 0) +
     (sortOrder !== "date_desc" ? 1 : 0) +
-    (filterStatus !== "all" ? 1 : 0);
+    (filterStatus !== "all" ? 1 : 0) +
+    (dateFilter.preset !== "all" ? 1 : 0);
+
+  const DATE_PRESETS = [
+    { value: "all",   label: "All Time" },
+    { value: "today", label: "Today" },
+    { value: "week",  label: "This Week" },
+    { value: "month", label: "This Month" },
+  ];
 
   return (
     <>
@@ -181,7 +192,7 @@ const MobileFilterDrawer = ({
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {activeCount > 0 && (
-              <button onClick={() => { setViewMode("grouped_salesman"); setSortOrder("date_desc"); setFilterStatus("all"); }}
+              <button onClick={() => { setViewMode("grouped_salesman"); setSortOrder("date_desc"); setFilterStatus("all"); setDateFilter({ preset: "all", start: "", end: "" }); onApplyDate({ preset: "all", start: "", end: "" }); }}
                 style={{
                   padding: "6px 14px", borderRadius: 20,
                   border: "1.5px solid var(--color-outline-variant)",
@@ -288,6 +299,35 @@ const MobileFilterDrawer = ({
               })}
             </div>
           </div>
+
+          {/* DATE section */}
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>Date Range</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {DATE_PRESETS.map((p) => {
+                const isActive = dateFilter.preset === p.value;
+                return (
+                  <button key={p.value} onClick={() => { const nf = { preset: p.value, start: "", end: "" }; setDateFilter(nf); onApplyDate(nf); }} style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "12px 14px", borderRadius: 14,
+                    border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                    background: isActive ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "var(--color-surface-container)",
+                    cursor: "pointer", outline: "none", textAlign: "left", transition: "all 0.15s",
+                  }}>
+                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 700 : 500, color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>{p.label}</span>
+                    {isActive && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                  </button>
+                );
+              })}
+              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                <input type="date" value={dateFilter.start} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", start: e.target.value }))} style={{ flex: 1, padding: "10px", borderRadius: 12, border: "1.5px solid var(--color-outline-variant)", background: "var(--color-surface-container)", color: "var(--color-on-surface)", fontSize: 13, outline: "none" }} />
+                <input type="date" value={dateFilter.end} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", end: e.target.value }))} style={{ flex: 1, padding: "10px", borderRadius: 12, border: "1.5px solid var(--color-outline-variant)", background: "var(--color-surface-container)", color: "var(--color-on-surface)", fontSize: 13, outline: "none" }} />
+              </div>
+              {dateFilter.preset === "custom" && dateFilter.start && (
+                <button onClick={() => onApplyDate(dateFilter)} style={{ padding: "11px", borderRadius: 12, border: "none", background: "var(--color-primary)", color: "var(--color-on-primary)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Apply Custom Range</button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ✅ Apply button — sticky at bottom, always above the navbar */}
@@ -353,174 +393,47 @@ const OrderCard = ({ order, isLatest }) => {
         e.currentTarget.style.borderColor = isLatest ? "#c7d2fe" : "#f1f5f9";
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 3,
-          background: sc.dot,
-          borderRadius: "14px 0 0 14px",
-        }}
-      />
+      {/* Left color strip */}
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: sc.dot, borderRadius: "14px 0 0 14px" }} />
       {isLatest && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 12,
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            color: "#fff",
-            fontSize: 9,
-            fontWeight: 800,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            padding: "2px 8px",
-            borderRadius: 6,
-          }}
-        >
-          NEW
-        </div>
+        <div style={{ position: "absolute", top: 10, right: 12, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 6 }}>NEW</div>
       )}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "14px 14px 14px 18px",
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            flexShrink: 0,
-            background: "#f1f5f9",
-            overflow: "hidden",
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <img
-            src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(order.partyName || "User")}`}
-            style={{ width: "100%", height: "100%" }}
-            alt=""
-          />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#0f172a",
-              fontFamily: "'Bricolage Grotesque', sans-serif",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              marginBottom: 4,
-            }}
-          >
-            {order.partyName}
+      <div style={{ padding: "12px 14px 12px 18px" }}>
+        {/* Top row: avatar + party name + chevron */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: "#f1f5f9", overflow: "hidden", border: "1px solid #e2e8f0" }}>
+            <img src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(order.partyName || "User")}`} style={{ width: "100%", height: "100%" }} alt="" />
           </div>
-          <div
-            style={{
-              fontSize: 11,
-              color: "#94a3b8",
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              flexWrap: "nowrap",
-              overflow: "hidden",
-            }}
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ flexShrink: 0 }}
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {order.partyName}
+            </div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+        {/* Bottom row: status + date + images + salesman */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 46 }}>
+          <div style={{ padding: "3px 9px", fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", borderRadius: 20, background: sc.bg, color: sc.text, border: `1px solid ${sc.border}`, flexShrink: 0, whiteSpace: "nowrap" }}>
+            {order.status}
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, display: "flex", alignItems: "center", gap: 4, overflow: "hidden", flex: 1 }}>
             <span style={{ whiteSpace: "nowrap" }}>
-              {dt.toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "short",
-              })}
+              {dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
               {" · "}
-              {dt.toLocaleTimeString("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
+              {dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
             </span>
             {order.images?.length > 0 && (
-              <span
-                style={{
-                  marginLeft: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  color: "#cbd5e1",
-                  flexShrink: 0,
-                }}
-              >
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
+              <span style={{ display: "flex", alignItems: "center", gap: 2, color: "#cbd5e1", flexShrink: 0 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
                 </svg>
                 {order.images.length}
               </span>
             )}
           </div>
         </div>
-        <div
-          style={{
-            padding: "4px 10px",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-            borderRadius: 20,
-            background: sc.bg,
-            color: sc.text,
-            border: `1px solid ${sc.border}`,
-            flexShrink: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {order.status}
-        </div>
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#cbd5e1"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ flexShrink: 0 }}
-        >
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
       </div>
     </div>
   );
@@ -576,12 +489,10 @@ const StatsBar = ({ allOrders, isMobile }) => {
     return (
       <div
         style={{
-          display: "flex",
-          gap: 8,
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: 6,
           marginBottom: 14,
-          overflowX: "auto",
-          scrollbarWidth: "none",
-          paddingBottom: 2,
         }}
       >
         {stats.map(({ label, value, color, bg, border }) => (
@@ -589,33 +500,31 @@ const StatsBar = ({ allOrders, isMobile }) => {
             key={label}
             style={{
               background: bg || "#fff",
-              borderRadius: 12,
+              borderRadius: 10,
               border: `1px solid ${border || "#e2e8f0"}`,
-              padding: "10px 14px",
-              flexShrink: 0,
-              minWidth: 68,
+              padding: "8px 4px",
               textAlign: "center",
             }}
           >
             <div
               style={{
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: 900,
                 color,
                 fontFamily: "'Bricolage Grotesque', sans-serif",
                 lineHeight: 1,
-                marginBottom: 4,
+                marginBottom: 3,
               }}
             >
               {value}
             </div>
             <div
               style={{
-                fontSize: 9,
+                fontSize: 8,
                 color,
                 fontWeight: 700,
                 textTransform: "uppercase",
-                letterSpacing: "0.07em",
+                letterSpacing: "0.05em",
                 opacity: 0.75,
               }}
             >
@@ -824,6 +733,7 @@ const AdminOrderList = () => {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "error" });
+  const [dateFilter, setDateFilter] = useState({ preset: "all", start: "", end: "" });
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
@@ -859,11 +769,11 @@ const AdminOrderList = () => {
 
   useEffect(() => {
     const h = setTimeout(() => {
-      if (!searchQuery) handleGetAllOrders(1, 500);
+      if (!searchQuery) handleGetAllOrders(1, 500, buildDateRange(dateFilter));
       else handleSearchOrders(searchQuery);
     }, 450);
     return () => clearTimeout(h);
-  }, [searchQuery]);
+  }, [searchQuery, dateFilter]);
 
   useEffect(() => {
     const styleId = "aol-styles";
@@ -943,7 +853,30 @@ const AdminOrderList = () => {
   const activeFilterCount =
     (viewMode !== "grouped_salesman" ? 1 : 0) +
     (sortOrder !== "date_desc" ? 1 : 0) +
-    (filterStatus !== "all" ? 1 : 0);
+    (filterStatus !== "all" ? 1 : 0) +
+    (dateFilter.preset !== "all" ? 1 : 0);
+
+  // ── Build date range params from preset ──────────────────────
+  function buildDateRange(df) {
+    if (!df || df.preset === "all") return {};
+    const now = new Date();
+    if (df.preset === "today") {
+      const s = new Date(now); s.setHours(0,0,0,0);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "week") {
+      const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0,0,0,0);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "month") {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "custom") {
+      return { startDate: df.start || undefined, endDate: df.end || undefined };
+    }
+    return {};
+  }
 
 
   const SearchBar = () => (
@@ -1247,10 +1180,10 @@ const AdminOrderList = () => {
                         <div
                           style={{
                             display: "flex",
-                            gap: 6,
-                            flexWrap: isDesktop ? "nowrap" : "wrap",
+                            gap: 4,
+                            flexWrap: "nowrap",
                             justifyContent: "flex-end",
-                            maxWidth: isDesktop ? "none" : 110,
+                            flexShrink: 0,
                           }}
                         >
                           {Object.entries(statuses).map(([s, c]) => {
@@ -1258,19 +1191,23 @@ const AdminOrderList = () => {
                             return (
                               <div
                                 key={s}
+                                title={`${s}: ${c}`}
                                 style={{
-                                  padding: "2px 8px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 3,
+                                  padding: isDesktop ? "2px 8px" : "2px 6px",
                                   borderRadius: 20,
                                   background: st.bg,
                                   color: st.text,
-                                  fontSize: 10,
+                                  fontSize: isDesktop ? 10 : 9,
                                   fontWeight: 700,
                                   border: `1px solid ${st.border}`,
-                                  textTransform: "capitalize",
                                   whiteSpace: "nowrap",
                                 }}
                               >
-                                {s} · {c}
+                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: st.dot, flexShrink: 0 }} />
+                                {c}
                               </div>
                             );
                           })}
@@ -1413,6 +1350,32 @@ const AdminOrderList = () => {
 
         <DesktopSortFilterBar />
 
+        {/* ── Date Range Filter Row (Desktop) ── */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.1em", flexShrink: 0 }}>DATE</span>
+          {[{ value: "all", label: "All Time" }, { value: "today", label: "Today" }, { value: "week", label: "This Week" }, { value: "month", label: "This Month" }].map((p) => {
+            const isActive = dateFilter.preset === p.value;
+            return (
+              <button key={p.value} onClick={() => setDateFilter({ preset: p.value, start: "", end: "" })} style={{
+                padding: "7px 14px", borderRadius: 9, fontSize: 11, fontWeight: 700,
+                border: `1.5px solid ${isActive ? "#818cf8" : "#e2e8f0"}`,
+                background: isActive ? "#eef2ff" : "#fff",
+                color: isActive ? "#4338ca" : "#64748b",
+                cursor: "pointer", transition: "all 0.12s", outline: "none", whiteSpace: "nowrap",
+              }}>{p.label}</button>
+            );
+          })}
+          <div style={{ width: 1, height: 20, background: "#e2e8f0", flexShrink: 0 }} />
+          <input type="date" value={dateFilter.start} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", start: e.target.value }))} style={{ padding: "7px 10px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: 12, color: "#374151", outline: "none", cursor: "pointer" }} />
+          <span style={{ fontSize: 11, color: "#94a3b8" }}>to</span>
+          <input type="date" value={dateFilter.end} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", end: e.target.value }))} style={{ padding: "7px 10px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: 12, color: "#374151", outline: "none", cursor: "pointer" }} />
+          {dateFilter.preset !== "all" && (
+            <span style={{ fontSize: 11, color: "#4338ca", fontWeight: 700, padding: "5px 10px", background: "#eef2ff", borderRadius: 8, border: "1px solid #c7d2fe" }}>
+              {dateFilter.preset === "today" ? "Today" : dateFilter.preset === "week" ? "This Week" : dateFilter.preset === "month" ? "This Month" : `${dateFilter.start || "?"} → ${dateFilter.end || "?"}`}
+            </span>
+          )}
+        </div>
+
         {loading && (!allOrders || allOrders.length === 0) ? (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div
@@ -1491,33 +1454,39 @@ const AdminOrderList = () => {
   /* ── MOBILE ── */
   return (
     <div style={{ width: "100%", padding: "0 0 40px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Orders</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Orders</h2>
         <button
           onClick={handleExport}
           disabled={isExporting}
           style={{
-            padding: "8px 14px",
+            width: 38,
+            height: 38,
             background: "#10b981",
             color: "#fff",
             border: "none",
             borderRadius: 10,
-            fontSize: 12,
-            fontWeight: 700,
             cursor: isExporting ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
+            display: "grid",
+            placeItems: "center",
             opacity: isExporting ? 0.7 : 1,
-            boxShadow: "0 2px 6px rgba(16,185,129,0.2)"
+            boxShadow: "0 2px 6px rgba(16,185,129,0.2)",
+            flexShrink: 0,
           }}
+          title={isExporting ? "Exporting..." : "Export Report"}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          {isExporting ? "Exporting..." : "Export Report"}
+          {isExporting ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 1s linear infinite" }}>
+              <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity="0.3" />
+              <path d="M21 12a9 9 0 00-9-9" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          )}
         </button>
       </div>
 
@@ -1606,6 +1575,33 @@ const AdminOrderList = () => {
         </button>
       </div>
 
+      {/* Active filter chips — visible at a glance */}
+      {activeFilterCount > 0 && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+          {filterStatus !== "all" && (() => {
+            const sc = getStatusConfig(filterStatus);
+            return (
+              <div onClick={() => setFilterStatus("all")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: sc.bg, color: sc.text, fontSize: 11, fontWeight: 700, border: `1px solid ${sc.border}`, cursor: "pointer", textTransform: "capitalize" }}>
+                {filterStatus}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </div>
+            );
+          })()}
+          {dateFilter.preset !== "all" && (
+            <div onClick={() => setDateFilter({ preset: "all", start: "", end: "" })} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: "#eef2ff", color: "#4338ca", fontSize: 11, fontWeight: 700, border: "1px solid #c7d2fe", cursor: "pointer" }}>
+              {dateFilter.preset === "today" ? "Today" : dateFilter.preset === "week" ? "This Week" : dateFilter.preset === "month" ? "This Month" : "Custom Range"}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </div>
+          )}
+          {viewMode !== "grouped_salesman" && (
+            <div onClick={() => setViewMode("grouped_salesman")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: "#f8fafc", color: "#64748b", fontSize: 11, fontWeight: 700, border: "1px solid #e2e8f0", cursor: "pointer" }}>
+              {viewMode === "flat" ? "Flat List" : "By Status"}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </div>
+          )}
+        </div>
+      )}
+
       {loading && (!allOrders || allOrders.length === 0) ? (
         <div
           style={{
@@ -1649,6 +1645,9 @@ const AdminOrderList = () => {
         setSortOrder={setSortOrder}
         filterStatus={filterStatus}
         setFilterStatus={setFilterStatus}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        onApplyDate={(nf) => setDateFilter(nf)}
       />
 
       {/* Mobile Toast Notification */}

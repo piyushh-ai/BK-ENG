@@ -49,10 +49,10 @@ export const useAdmin = () => {
     }
   };
 
-  const handleGetAllOrders = async (page = 1, limit = 100) => {
+  const handleGetAllOrders = async (page = 1, limit = 100, dateRange = {}) => {
     try {
       dispatch(setLoading(true));
-      const response = await getAllOrdersAdmin(page, limit);
+      const response = await getAllOrdersAdmin(page, limit, dateRange);
       dispatch(setAllOrders(response.orders || []));
       dispatch(setLoading(false));
       return response;

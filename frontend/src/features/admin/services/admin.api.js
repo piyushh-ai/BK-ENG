@@ -49,9 +49,12 @@ const adminApiInstance = setupCache(_adminAxios, { ttl: 2 * 60 * 1000, methods: 
 
 
 // cache: false — admin must always see latest orders after any status update
-export const getAllOrdersAdmin = async (page = 1, limit = 100) => {
+export const getAllOrdersAdmin = async (page = 1, limit = 100, { startDate, endDate } = {}) => {
     try {
-        const response = await adminApiInstance.get(`/all?page=${page}&limit=${limit}`, { cache: false });
+        const params = new URLSearchParams({ page, limit });
+        if (startDate) params.append("startDate", startDate);
+        if (endDate)   params.append("endDate",   endDate);
+        const response = await adminApiInstance.get(`/all?${params.toString()}`, { cache: false });
         return response.data;
     } catch (error) {
         throw error;

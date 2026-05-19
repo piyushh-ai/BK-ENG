@@ -10,18 +10,32 @@ import xlsx from "xlsx";
 export const getAllOrders = async (req, res) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit = Math.min(100, parseInt(req.query.limit) || 10);
+    const limit = Math.min(2000, parseInt(req.query.limit) || 10);
     const skip  = (page - 1) * limit;
+
+    // ── Date range filter ─────────────────────────────────────
+    const filter = {};
+    const { startDate, endDate } = req.query;
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        // endDate inclusive: go to end of that day
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = end;
+      }
+    }
 
     const [orders, total] = await Promise.all([
       salesOrderModel
-        .find()
+        .find(filter)
         .populate("user", "name email")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      salesOrderModel.countDocuments(),
+      salesOrderModel.countDocuments(filter),
     ]);
 
     return res.status(200).json({
@@ -54,8 +68,20 @@ export const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
+    const prevStatus = order.status;
     if (status) order.status = status;
     if (remark !== undefined) order.remark = remark.trim();
+
+    // ── Push to statusHistory audit trail ────────────────────
+    // Only log if something actually changed
+    if ((status && status !== prevStatus) || remark !== undefined) {
+      order.statusHistory.push({
+        status: order.status,
+        remark: order.remark,
+        changedBy: req.user._id,
+        changedByName: req.user.name || "",
+      });
+    }
 
     await order.save();
 
@@ -166,6 +192,10 @@ export const exportReport = async (req, res) => {
       .lean();
 
     const excelData = orders.map((order, index) => {
+      const imageUrls = order.images?.length
+        ? order.images.map((img) => img.url).join("\n")
+        : "";
+
       return {
         "S.No": index + 1,
         "Order ID": order._id.toString(),
@@ -176,26 +206,28 @@ export const exportReport = async (req, res) => {
         "Description": order.description || "",
         "Remark": order.remark || "",
         "Images Count": order.images ? order.images.length : 0,
+        "Image URLs": imageUrls,
         "Created At": new Date(order.createdAt).toLocaleString("en-IN"),
         "Updated At": new Date(order.updatedAt).toLocaleString("en-IN"),
       };
     });
 
     const worksheet = xlsx.utils.json_to_sheet(excelData);
-    
+
     // Auto-fit columns
     const colWidths = [
-      { wch: 6 },  // S.No
-      { wch: 26 }, // Order ID
-      { wch: 30 }, // Party Name
-      { wch: 20 }, // Salesman
-      { wch: 25 }, // Salesman Email
-      { wch: 12 }, // Status
-      { wch: 40 }, // Description
-      { wch: 40 }, // Remark
-      { wch: 12 }, // Images Count
-      { wch: 20 }, // Created At
-      { wch: 20 }, // Updated At
+      { wch: 6 },   // S.No
+      { wch: 26 },  // Order ID
+      { wch: 30 },  // Party Name
+      { wch: 20 },  // Salesman
+      { wch: 25 },  // Salesman Email
+      { wch: 12 },  // Status
+      { wch: 40 },  // Description
+      { wch: 40 },  // Remark
+      { wch: 12 },  // Images Count
+      { wch: 80 },  // Image URLs
+      { wch: 20 },  // Created At
+      { wch: 20 },  // Updated At
     ];
     worksheet["!cols"] = colWidths;
 

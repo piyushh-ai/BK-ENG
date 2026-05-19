@@ -1,5 +1,30 @@
 import mongoose from "mongoose";
 
+const statusHistorySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["pending", "completed", "cancelled", "partial"],
+      required: true,
+    },
+    remark: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    changedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    changedByName: {
+      type: String,
+      default: "",
+    },
+  },
+  { _id: true, timestamps: true }
+);
+
 const salesOrderSchema = new mongoose.Schema(
   {
     partyName: {
@@ -39,6 +64,11 @@ const salesOrderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, "User is required"],
+    },
+    // ── Status audit trail ────────────────────────────────────
+    statusHistory: {
+      type: [statusHistorySchema],
+      default: [],
     },
   },
   {

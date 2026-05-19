@@ -436,6 +436,88 @@ const Section = ({ label, children, noBorder }) => (
 );
 
 /* ─────────────────────────────────────────────
+   Status Timeline
+───────────────────────────────────────────── */
+const STATUS_DOT = {
+  pending:   "#f59e0b",
+  completed: "#22c55e",
+  cancelled: "#ef4444",
+  partial:   "#3b82f6",
+};
+
+const StatusTimeline = ({ history }) => {
+  if (!history || history.length === 0) return null;
+  // Show latest first
+  const sorted = [...history].reverse();
+  return (
+    <Section label={`Status History · ${history.length} ${history.length === 1 ? "update" : "updates"}`}>
+      <div style={{ position: "relative", paddingLeft: 20 }}>
+        {/* Vertical line */}
+        <div style={{
+          position: "absolute", left: 7, top: 6, bottom: 6,
+          width: 2, background: "var(--color-outline-variant)",
+          borderRadius: 2,
+        }} />
+        {sorted.map((entry, i) => {
+          const dot = STATUS_DOT[entry.status] || "#9ca3af";
+          const sc  = STATUS_COLORS[entry.status] || { bg: "#f3f4f6", text: "#374151" };
+          const dt  = entry.createdAt ? new Date(entry.createdAt) : null;
+          return (
+            <div key={entry._id || i} style={{
+              display: "flex", gap: 12, alignItems: "flex-start",
+              marginBottom: i < sorted.length - 1 ? 16 : 0,
+              position: "relative",
+            }}>
+              {/* Dot */}
+              <div style={{
+                width: 16, height: 16, borderRadius: "50%",
+                background: dot, border: "2.5px solid #fff",
+                boxShadow: `0 0 0 2px ${dot}44`,
+                flexShrink: 0, marginTop: 1,
+                position: "relative", zIndex: 1,
+              }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 800, textTransform: "capitalize",
+                    padding: "2px 9px", borderRadius: 20,
+                    background: sc.bg, color: sc.text,
+                    letterSpacing: "0.03em",
+                  }}>{entry.status}</span>
+                  {dt && (
+                    <span style={{ fontSize: 11, color: "var(--color-on-surface-variant)", fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>
+                      {dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                      {" · "}
+                      {dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </div>
+                {entry.changedByName && (
+                  <div style={{ fontSize: 12, color: "var(--color-on-surface-variant)", fontFamily: "'DM Sans', sans-serif", marginBottom: entry.remark ? 4 : 0 }}>
+                    by <span style={{ fontWeight: 700, color: "var(--color-on-surface)" }}>{entry.changedByName}</span>
+                  </div>
+                )}
+                {entry.remark && (
+                  <div style={{
+                    fontSize: 12.5, color: "var(--color-on-surface)",
+                    background: "var(--color-surface-container)",
+                    border: "1px solid var(--color-outline-variant)",
+                    borderRadius: 10, padding: "8px 12px",
+                    lineHeight: 1.55, fontStyle: "italic",
+                    fontFamily: "'DM Sans', sans-serif",
+                    marginTop: 2,
+                  }}>💬 {entry.remark}</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Section>
+  );
+};
+
+/* ─────────────────────────────────────────────
    InfoBlock — defined OUTSIDE AdminOrderDetail
    so it is not recreated on every render
 ───────────────────────────────────────────── */
@@ -772,6 +854,7 @@ const AdminOrderDetail = () => {
               }}>Order Information</div>
             </div>
             <InfoBlock order={order} isDesktop={isDesktop} onImageClick={handleImageClick} />
+            <StatusTimeline history={order.statusHistory} />
           </div>
 
           {/* RIGHT — Sidebar: avatar stats + action panel */}
@@ -870,8 +953,8 @@ const AdminOrderDetail = () => {
 
       {/* Top Header */}
       <div style={{
-        display:"flex",alignItems:"center",gap:12,
-        padding:"14px 16px 12px",
+        display:"flex",alignItems:"center",gap:10,
+        padding:"12px 16px",
         borderBottom:"1px solid var(--color-outline-variant)",
         position:"sticky",top:0,
         background:"color-mix(in srgb,var(--color-surface-container-lowest) 92%,transparent)",
@@ -890,11 +973,11 @@ const AdminOrderDetail = () => {
         >‹</button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize:16,fontWeight:800,color:"var(--color-on-surface)",fontFamily:"'Bricolage Grotesque',sans-serif" }}>Order Detail</div>
-          <div style={{ fontSize:11,color:"var(--color-on-surface-variant)",fontWeight:600,marginTop:1 }}>
-            {dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-            {" · "}
-            {dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+          <div style={{ fontSize:15,fontWeight:800,color:"var(--color-on-surface)",fontFamily:"'Bricolage Grotesque',sans-serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{order.partyName}</div>
+          <div style={{ fontSize:11,color:"var(--color-on-surface-variant)",fontWeight:600,marginTop:1,display:"flex",alignItems:"center",gap:4 }}>
+            <span>{order.user?.name || "Unknown"}</span>
+            <span style={{ color:"var(--color-outline)" }}>·</span>
+            <span>{dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</span>
           </div>
         </div>
 
@@ -910,6 +993,7 @@ const AdminOrderDetail = () => {
       </div>
 
       <InfoBlock order={order} isDesktop={isDesktop} onImageClick={handleImageClick} />
+      <StatusTimeline history={order.statusHistory} />
 
       {/* Update panel */}
       <div style={{ margin:"16px 16px 0" }}>
