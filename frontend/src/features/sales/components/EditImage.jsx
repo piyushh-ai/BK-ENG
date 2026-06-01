@@ -64,6 +64,8 @@ const EditImage = ({ src, originalName = "edited.jpg", onSave, onCancel }) => {
       imageSmoothingQuality: "high",
       maxWidth: 4096,
       maxHeight: 4096,
+      // ⬇ Fill white — prevents transparent pixels becoming black in JPEG
+      fillColor: "#ffffff",
     }).toBlob(
       (blob) => {
         if (!blob) { setIsSaving(false); return; }
@@ -185,7 +187,7 @@ const EditImage = ({ src, originalName = "edited.jpg", onSave, onCancel }) => {
               background={false}
               responsive
               autoCropArea={0.85}
-              checkOrientation={false}
+              checkOrientation
               toggleDragModeOnDblclick={false}
               ready={() => setCropperReady(true)}
               cropBoxMovable

@@ -37,7 +37,6 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
-      "http://BK-ENG-ALB-1130725411.ap-south-1.elb.amazonaws.com",
       "https://bk-eng.onrender.com",
       "http://13.205.77.25",
     ],

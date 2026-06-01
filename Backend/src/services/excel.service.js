@@ -2,9 +2,6 @@
 import XLSX from "xlsx";
 import fs from "fs";
 
-
-
-
 async function importExcel(filePath, model) {
   const workbook = XLSX.readFile(filePath);
   const stats = fs.statSync(filePath);

@@ -718,6 +718,219 @@ const CustomSelect = ({ value, onChange, options }) => {
 };
 
 /* ─────────────────────────────────────────────
+   Search Bar
+───────────────────────────────────────────── */
+const SearchBar = ({ searchQuery, setSearchQuery }) => (
+  <div style={{ position: "relative" }}>
+    <svg
+      style={{
+        position: "absolute",
+        left: 14,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 16,
+        height: 16,
+        color: "#94a3b8",
+        pointerEvents: "none",
+      }}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+    </svg>
+    <input
+      type="text"
+      placeholder="Search party name…"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      style={{
+        width: "100%",
+        paddingLeft: 42,
+        paddingRight: 14,
+        paddingTop: 11,
+        paddingBottom: 11,
+        borderRadius: 12,
+        border: "1.5px solid #e2e8f0",
+        background: "#fff",
+        color: "#0f172a",
+        fontSize: 14,
+        fontWeight: 500,
+        outline: "none",
+        boxSizing: "border-box",
+        transition: "border-color 0.15s, box-shadow 0.15s",
+      }}
+      onFocus={(e) => {
+        e.target.style.borderColor = "#818cf8";
+        e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.1)";
+      }}
+      onBlur={(e) => {
+        e.target.style.borderColor = "#e2e8f0";
+        e.target.style.boxShadow = "none";
+      }}
+    />
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   Desktop Sort/Filter Bar
+───────────────────────────────────────────── */
+const DesktopSortFilterBar = ({ viewMode, setViewMode, sortOrder, setSortOrder }) => (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 14,
+      padding: "8px 12px",
+      background: "#f8fafc",
+      borderRadius: 12,
+      border: "1px solid #f1f5f9",
+    }}
+  >
+    <span style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.1em", flexShrink: 0 }}>
+      VIEW
+    </span>
+    <CustomSelect
+      value={viewMode}
+      onChange={setViewMode}
+      options={[
+        { value: "grouped_salesman", label: "By Salesman" },
+        { value: "grouped_status", label: "By Status" },
+        { value: "flat", label: "Flat List" },
+      ]}
+    />
+    <div style={{ width: 1, height: 20, background: "#e2e8f0", flexShrink: 0, margin: "0 4px" }} />
+    <span style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.1em", flexShrink: 0 }}>
+      SORT
+    </span>
+    <CustomSelect
+      value={sortOrder}
+      onChange={setSortOrder}
+      options={[
+        { value: "date_desc", label: "Newest First" },
+        { value: "date_asc", label: "Oldest First" },
+        { value: "party_asc", label: "Party A–Z" },
+      ]}
+    />
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   Order Grid
+───────────────────────────────────────────── */
+const OrderGrid = ({ processedOrders, searchQuery, sortOrder, isDesktop, listRef }) => {
+  const isEmpty =
+    processedOrders.type === "flat"
+      ? processedOrders.data.length === 0
+      : Object.keys(processedOrders.data).length === 0;
+
+  if (isEmpty) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 20px", gap: 10 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: "#f1f5f9", display: "grid", placeItems: "center" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </div>
+        <div style={{ fontSize: 14, color: "#64748b", fontWeight: 600 }}>
+          {searchQuery ? "No orders found" : "No orders yet"}
+        </div>
+        <div style={{ fontSize: 12, color: "#94a3b8" }}>
+          {searchQuery ? "Try searching something else" : "Orders will appear here"}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={listRef} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {processedOrders.type === "flat" ? (
+        <div
+          style={{
+            display: isDesktop ? "grid" : "flex",
+            gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined,
+            flexDirection: isDesktop ? undefined : "column",
+            gap: 10,
+          }}
+        >
+          {processedOrders.data.map((order, index) => (
+            <OrderCard
+              key={order._id}
+              order={order}
+              isLatest={index === 0 && !searchQuery && sortOrder === "date_desc"}
+            />
+          ))}
+        </div>
+      ) : (
+        Object.entries(processedOrders.data).map(([groupName, orders]) => {
+          const sc = getStatusConfig(groupName);
+          const isStatusGroup = Object.keys(STATUS_CONFIG).includes(groupName);
+          return (
+            <div
+              key={groupName}
+              style={{ background: "#ffffff", borderRadius: 16, overflow: "hidden", border: "1px solid #f1f5f9", boxShadow: "0 1px 4px rgba(0,0,0,0.03)" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "#fafbfc", borderBottom: "1px solid #f1f5f9" }}>
+                {isStatusGroup ? (
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: sc.bg, display: "grid", placeItems: "center", flexShrink: 0, border: `1px solid ${sc.border}` }}>
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: sc.dot }} />
+                  </div>
+                ) : (
+                  <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, overflow: "hidden", border: "1.5px solid #e0e7ff" }}>
+                    <img src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(groupName || "User")}`} style={{ width: "100%", height: "100%" }} alt="" />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: isStatusGroup ? "capitalize" : "none" }}>
+                    {groupName}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, marginTop: 1 }}>
+                    {orders.length} {orders.length === 1 ? "order" : "orders"}
+                  </div>
+                </div>
+                {!isStatusGroup && (() => {
+                  const statuses = orders.reduce((a, o) => { a[o.status] = (a[o.status] || 0) + 1; return a; }, {});
+                  return (
+                    <div style={{ display: "flex", gap: 4, flexWrap: "nowrap", justifyContent: "flex-end", flexShrink: 0 }}>
+                      {Object.entries(statuses).map(([s, c]) => {
+                        const st = getStatusConfig(s);
+                        return (
+                          <div key={s} title={`${s}: ${c}`} style={{ display: "flex", alignItems: "center", gap: 3, padding: isDesktop ? "2px 8px" : "2px 6px", borderRadius: 20, background: st.bg, color: st.text, fontSize: isDesktop ? 10 : 9, fontWeight: 700, border: `1px solid ${st.border}`, whiteSpace: "nowrap" }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: st.dot, flexShrink: 0 }} />
+                            {c}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+              <div style={{ padding: 12, display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 10 }}>
+                {orders.map((order, index) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    isLatest={index === 0 && !searchQuery && sortOrder === "date_desc"}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────── */
 const AdminOrderList = () => {
@@ -766,6 +979,28 @@ const AdminOrderList = () => {
   const [searchParams] = useSearchParams();
   const highlightOrderId = searchParams.get("orderId");
   const listRef = useRef(null);
+
+  // ── Build date range params from preset ──────────────────────
+  function buildDateRange(df) {
+    if (!df || df.preset === "all") return {};
+    const now = new Date();
+    if (df.preset === "today") {
+      const s = new Date(now); s.setHours(0,0,0,0);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "week") {
+      const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0,0,0,0);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "month") {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "custom") {
+      return { startDate: df.start || undefined, endDate: df.end || undefined };
+    }
+    return {};
+  }
 
   useEffect(() => {
     const h = setTimeout(() => {
@@ -856,392 +1091,6 @@ const AdminOrderList = () => {
     (filterStatus !== "all" ? 1 : 0) +
     (dateFilter.preset !== "all" ? 1 : 0);
 
-  // ── Build date range params from preset ──────────────────────
-  function buildDateRange(df) {
-    if (!df || df.preset === "all") return {};
-    const now = new Date();
-    if (df.preset === "today") {
-      const s = new Date(now); s.setHours(0,0,0,0);
-      return { startDate: s.toISOString(), endDate: now.toISOString() };
-    }
-    if (df.preset === "week") {
-      const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0,0,0,0);
-      return { startDate: s.toISOString(), endDate: now.toISOString() };
-    }
-    if (df.preset === "month") {
-      const s = new Date(now.getFullYear(), now.getMonth(), 1);
-      return { startDate: s.toISOString(), endDate: now.toISOString() };
-    }
-    if (df.preset === "custom") {
-      return { startDate: df.start || undefined, endDate: df.end || undefined };
-    }
-    return {};
-  }
-
-
-  const SearchBar = () => (
-    <div style={{ position: "relative" }}>
-      <svg
-        style={{
-          position: "absolute",
-          left: 14,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 16,
-          height: 16,
-          color: "#94a3b8",
-          pointerEvents: "none",
-        }}
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.5"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
-      <input
-        type="text"
-        placeholder="Search party name…"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        style={{
-          width: "100%",
-          paddingLeft: 42,
-          paddingRight: 14,
-          paddingTop: 11,
-          paddingBottom: 11,
-          borderRadius: 12,
-          border: "1.5px solid #e2e8f0",
-          background: "#fff",
-          color: "#0f172a",
-          fontSize: 14,
-          fontWeight: 500,
-          outline: "none",
-          boxSizing: "border-box",
-          transition: "border-color 0.15s, box-shadow 0.15s",
-        }}
-        onFocus={(e) => {
-          e.target.style.borderColor = "#818cf8";
-          e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.1)";
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = "#e2e8f0";
-          e.target.style.boxShadow = "none";
-        }}
-      />
-    </div>
-  );
-
-  const DesktopSortFilterBar = () => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        marginBottom: 14,
-        padding: "8px 12px",
-        background: "#f8fafc",
-        borderRadius: 12,
-        border: "1px solid #f1f5f9",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: 800,
-          color: "#94a3b8",
-          letterSpacing: "0.1em",
-          flexShrink: 0,
-        }}
-      >
-        VIEW
-      </span>
-      <CustomSelect
-        value={viewMode}
-        onChange={setViewMode}
-        options={[
-          { value: "grouped_salesman", label: "By Salesman" },
-          { value: "grouped_status", label: "By Status" },
-          { value: "flat", label: "Flat List" },
-        ]}
-      />
-      <div
-        style={{
-          width: 1,
-          height: 20,
-          background: "#e2e8f0",
-          flexShrink: 0,
-          margin: "0 4px",
-        }}
-      />
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: 800,
-          color: "#94a3b8",
-          letterSpacing: "0.1em",
-          flexShrink: 0,
-        }}
-      >
-        SORT
-      </span>
-      <CustomSelect
-        value={sortOrder}
-        onChange={setSortOrder}
-        options={[
-          { value: "date_desc", label: "Newest First" },
-          { value: "date_asc", label: "Oldest First" },
-          { value: "party_asc", label: "Party A–Z" },
-        ]}
-      />
-    </div>
-  );
-
-  const OrderGrid = () => {
-    const isEmpty =
-      processedOrders.type === "flat"
-        ? processedOrders.data.length === 0
-        : Object.keys(processedOrders.data).length === 0;
-    if (isEmpty) {
-      return (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "64px 20px",
-            gap: 10,
-          }}
-        >
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              background: "#f1f5f9",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#94a3b8"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </div>
-          <div style={{ fontSize: 14, color: "#64748b", fontWeight: 600 }}>
-            {searchQuery ? "No orders found" : "No orders yet"}
-          </div>
-          <div style={{ fontSize: 12, color: "#94a3b8" }}>
-            {searchQuery
-              ? "Try searching something else"
-              : "Orders will appear here"}
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div
-        ref={listRef}
-        style={{ display: "flex", flexDirection: "column", gap: 16 }}
-      >
-        {processedOrders.type === "flat" ? (
-          <div
-            style={{
-              display: isDesktop ? "grid" : "flex",
-              gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined,
-              flexDirection: isDesktop ? undefined : "column",
-              gap: 10,
-            }}
-          >
-            {processedOrders.data.map((order, index) => (
-              <OrderCard
-                key={order._id}
-                order={order}
-                isLatest={
-                  index === 0 && !searchQuery && sortOrder === "date_desc"
-                }
-              />
-            ))}
-          </div>
-        ) : (
-          Object.entries(processedOrders.data).map(([groupName, orders]) => {
-            const sc = getStatusConfig(groupName);
-            return (
-              <div
-                key={groupName}
-                style={{
-                  background: "#ffffff",
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  border: "1px solid #f1f5f9",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "14px 16px",
-                    background: "#fafbfc",
-                    borderBottom: "1px solid #f1f5f9",
-                  }}
-                >
-                  {viewMode === "grouped_salesman" && (
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 10,
-                        flexShrink: 0,
-                        overflow: "hidden",
-                        border: "1.5px solid #e0e7ff",
-                      }}
-                    >
-                      <img
-                        src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(groupName || "User")}`}
-                        style={{ width: "100%", height: "100%" }}
-                        alt=""
-                      />
-                    </div>
-                  )}
-                  {viewMode === "grouped_status" && (
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 10,
-                        background: sc.bg,
-                        display: "grid",
-                        placeItems: "center",
-                        flexShrink: 0,
-                        border: `1px solid ${sc.border}`,
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: "50%",
-                          background: sc.dot,
-                        }}
-                      />
-                    </div>
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 800,
-                        color: "#0f172a",
-                        fontFamily: "'Bricolage Grotesque', sans-serif",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        textTransform:
-                          viewMode === "grouped_status" ? "capitalize" : "none",
-                      }}
-                    >
-                      {groupName}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "#94a3b8",
-                        fontWeight: 600,
-                        marginTop: 1,
-                      }}
-                    >
-                      {orders.length} {orders.length === 1 ? "order" : "orders"}
-                    </div>
-                  </div>
-                  {viewMode === "grouped_salesman" &&
-                    (() => {
-                      const statuses = orders.reduce((a, o) => {
-                        a[o.status] = (a[o.status] || 0) + 1;
-                        return a;
-                      }, {});
-                      return (
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 4,
-                            flexWrap: "nowrap",
-                            justifyContent: "flex-end",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {Object.entries(statuses).map(([s, c]) => {
-                            const st = getStatusConfig(s);
-                            return (
-                              <div
-                                key={s}
-                                title={`${s}: ${c}`}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 3,
-                                  padding: isDesktop ? "2px 8px" : "2px 6px",
-                                  borderRadius: 20,
-                                  background: st.bg,
-                                  color: st.text,
-                                  fontSize: isDesktop ? 10 : 9,
-                                  fontWeight: 700,
-                                  border: `1px solid ${st.border}`,
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: st.dot, flexShrink: 0 }} />
-                                {c}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
-                </div>
-                <div
-                  style={{
-                    padding: 12,
-                    display: isDesktop ? "grid" : "flex",
-                    gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined,
-                    flexDirection: isDesktop ? undefined : "column",
-                    gap: 10,
-                  }}
-                >
-                  {orders.map((order, index) => (
-                    <OrderCard
-                      key={order._id}
-                      order={order}
-                      isLatest={
-                        index === 0 && !searchQuery && sortOrder === "date_desc"
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    );
-  };
-
   /* ── DESKTOP ── */
   if (isDesktop) {
     const STATUS_FILTERS = [
@@ -1254,6 +1103,7 @@ const AdminOrderList = () => {
     return (
       <div style={{ width: "100%", padding: "0 0 48px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+
           <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Orders</h2>
           <button
             onClick={handleExport}
@@ -1296,7 +1146,7 @@ const AdminOrderList = () => {
           }}
         >
           <div style={{ flex: 1 }}>
-            <SearchBar />
+            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
           </div>
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             {STATUS_FILTERS.map((s) => {
@@ -1348,7 +1198,12 @@ const AdminOrderList = () => {
           </div>
         </div>
 
-        <DesktopSortFilterBar />
+        <DesktopSortFilterBar
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+        />
 
         {/* ── Date Range Filter Row (Desktop) ── */}
         <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
@@ -1409,7 +1264,13 @@ const AdminOrderList = () => {
             </div>
           </div>
         ) : (
-          <OrderGrid />
+          <OrderGrid
+            processedOrders={processedOrders}
+            searchQuery={searchQuery}
+            sortOrder={sortOrder}
+            isDesktop={isDesktop}
+            listRef={listRef}
+          />
         )}
 
         {/* Desktop Toast Notification */}
@@ -1505,7 +1366,7 @@ const AdminOrderList = () => {
         }}
       >
         <div style={{ flex: 1 }}>
-          <SearchBar />
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         </div>
         <button
           onClick={() => setFilterDrawerOpen(true)}
@@ -1632,7 +1493,13 @@ const AdminOrderList = () => {
           Loading orders…
         </div>
       ) : (
-        <OrderGrid />
+        <OrderGrid
+          processedOrders={processedOrders}
+          searchQuery={searchQuery}
+          sortOrder={sortOrder}
+          isDesktop={isDesktop}
+          listRef={listRef}
+        />
       )}
 
       {/* Filter Drawer */}
