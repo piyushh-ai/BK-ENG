@@ -122,13 +122,13 @@ const MobileFilterDrawer = ({
     (viewMode !== "grouped_salesman" ? 1 : 0) +
     (sortOrder !== "date_desc" ? 1 : 0) +
     (filterStatus !== "all" ? 1 : 0) +
-    (dateFilter.preset !== "all" ? 1 : 0);
+    (dateFilter.preset !== "today" ? 1 : 0);
 
   const DATE_PRESETS = [
-    { value: "all",   label: "All Time" },
     { value: "today", label: "Today" },
     { value: "week",  label: "This Week" },
     { value: "month", label: "This Month" },
+    { value: "all",   label: "All Time" },
   ];
 
   return (
@@ -192,7 +192,7 @@ const MobileFilterDrawer = ({
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {activeCount > 0 && (
-              <button onClick={() => { setViewMode("grouped_salesman"); setSortOrder("date_desc"); setFilterStatus("all"); setDateFilter({ preset: "all", start: "", end: "" }); onApplyDate({ preset: "all", start: "", end: "" }); }}
+              <button onClick={() => { setViewMode("grouped_salesman"); setSortOrder("date_desc"); setFilterStatus("all"); setDateFilter({ preset: "today", start: "", end: "" }); onApplyDate({ preset: "today", start: "", end: "" }); }}
                 style={{
                   padding: "6px 14px", borderRadius: 20,
                   border: "1.5px solid var(--color-outline-variant)",
@@ -303,28 +303,112 @@ const MobileFilterDrawer = ({
           {/* DATE section */}
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>Date Range</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+            {/* Quick preset chips — 2x2 grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
               {DATE_PRESETS.map((p) => {
                 const isActive = dateFilter.preset === p.value;
                 return (
-                  <button key={p.value} onClick={() => { const nf = { preset: p.value, start: "", end: "" }; setDateFilter(nf); onApplyDate(nf); }} style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    padding: "12px 14px", borderRadius: 14,
-                    border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
-                    background: isActive ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "var(--color-surface-container)",
-                    cursor: "pointer", outline: "none", textAlign: "left", transition: "all 0.15s",
-                  }}>
-                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 700 : 500, color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>{p.label}</span>
-                    {isActive && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                  <button key={p.value}
+                    onClick={() => { const nf = { preset: p.value, start: "", end: "" }; setDateFilter(nf); onApplyDate(nf); }}
+                    style={{
+                      padding: "11px 8px", borderRadius: 12,
+                      border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                      background: isActive ? "color-mix(in srgb, var(--color-primary) 12%, transparent)" : "var(--color-surface-container)",
+                      cursor: "pointer", outline: "none", transition: "all 0.15s",
+                      fontSize: 13, fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)",
+                      fontFamily: "'DM Sans', sans-serif",
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                    <span>{p.label}</span>
+                    {isActive && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
                   </button>
                 );
               })}
-              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                <input type="date" value={dateFilter.start} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", start: e.target.value }))} style={{ flex: 1, padding: "10px", borderRadius: 12, border: "1.5px solid var(--color-outline-variant)", background: "var(--color-surface-container)", color: "var(--color-on-surface)", fontSize: 13, outline: "none" }} />
-                <input type="date" value={dateFilter.end} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", end: e.target.value }))} style={{ flex: 1, padding: "10px", borderRadius: 12, border: "1.5px solid var(--color-outline-variant)", background: "var(--color-surface-container)", color: "var(--color-on-surface)", fontSize: 13, outline: "none" }} />
+            </div>
+
+            {/* Custom date range card */}
+            <div style={{
+              borderRadius: 14, overflow: "hidden",
+              border: `1.5px solid ${dateFilter.preset === "custom" ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+              background: dateFilter.preset === "custom" ? "color-mix(in srgb, var(--color-primary) 5%, transparent)" : "var(--color-surface-container)",
+              transition: "all 0.15s",
+            }}>
+              <div style={{
+                padding: "10px 14px",
+                fontSize: 10, fontWeight: 800,
+                color: dateFilter.preset === "custom" ? "var(--color-primary)" : "var(--color-outline)",
+                letterSpacing: "0.1em", textTransform: "uppercase",
+                fontFamily: "'DM Sans', sans-serif",
+                borderBottom: `1px solid ${dateFilter.preset === "custom" ? "color-mix(in srgb, var(--color-primary) 20%, transparent)" : "var(--color-outline-variant)"}`,
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Custom Range
+                {dateFilter.preset === "custom" && <span style={{ marginLeft: "auto", fontSize: 10, opacity: 0.7 }}>✓ Active</span>}
               </div>
+
+              <div style={{ padding: "12px 14px", display: "flex", gap: 10 }}>
+                {/* FROM */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>From</div>
+                  <input
+                    type="date"
+                    value={dateFilter.preset === "custom" ? dateFilter.start : ""}
+                    onChange={e => {
+                      const nf = { preset: "custom", start: e.target.value, end: dateFilter.preset === "custom" ? dateFilter.end : "" };
+                      setDateFilter(nf);
+                      if (e.target.value) onApplyDate(nf);
+                    }}
+                    style={{
+                      width: "100%", padding: "9px 10px", borderRadius: 10, boxSizing: "border-box",
+                      border: "1.5px solid var(--color-outline-variant)",
+                      background: "var(--color-surface-container-lowest)",
+                      color: "var(--color-on-surface)", fontSize: 13, outline: "none",
+                    }}
+                  />
+                </div>
+
+                {/* Arrow */}
+                <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 10, color: "var(--color-outline)", fontSize: 16 }}>→</div>
+
+                {/* TO */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>To <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.7 }}>(optional)</span></div>
+                  <input
+                    type="date"
+                    value={dateFilter.preset === "custom" ? dateFilter.end : ""}
+                    min={dateFilter.preset === "custom" ? dateFilter.start : ""}
+                    onChange={e => {
+                      const nf = { preset: "custom", start: dateFilter.preset === "custom" ? dateFilter.start : "", end: e.target.value };
+                      setDateFilter(nf);
+                      onApplyDate(nf);
+                    }}
+                    style={{
+                      width: "100%", padding: "9px 10px", borderRadius: 10, boxSizing: "border-box",
+                      border: "1.5px solid var(--color-outline-variant)",
+                      background: "var(--color-surface-container-lowest)",
+                      color: "var(--color-on-surface)", fontSize: 13, outline: "none",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Summary label */}
               {dateFilter.preset === "custom" && dateFilter.start && (
-                <button onClick={() => onApplyDate(dateFilter)} style={{ padding: "11px", borderRadius: 12, border: "none", background: "var(--color-primary)", color: "var(--color-on-primary)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Apply Custom Range</button>
+                <div style={{
+                  padding: "8px 14px 10px",
+                  fontSize: 12, fontWeight: 600, color: "var(--color-primary)",
+                  fontFamily: "'DM Sans', sans-serif",
+                  borderTop: "1px solid color-mix(in srgb, var(--color-primary) 15%, transparent)",
+                }}>
+                  {dateFilter.end && dateFilter.end !== dateFilter.start
+                    ? `Showing ${dateFilter.start} → ${dateFilter.end}`
+                    : `Showing only ${dateFilter.start}`}
+                </div>
               )}
             </div>
           </div>
@@ -946,7 +1030,7 @@ const AdminOrderList = () => {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "error" });
-  const [dateFilter, setDateFilter] = useState({ preset: "all", start: "", end: "" });
+  const [dateFilter, setDateFilter] = useState({ preset: "today", start: "", end: "" });
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
@@ -997,7 +1081,13 @@ const AdminOrderList = () => {
       return { startDate: s.toISOString(), endDate: now.toISOString() };
     }
     if (df.preset === "custom") {
-      return { startDate: df.start || undefined, endDate: df.end || undefined };
+      if (!df.start) return {};
+      // Start: beginning of selected start date
+      const s = new Date(df.start); s.setHours(0, 0, 0, 0);
+      // End: if end date provided use end-of-day of that date, else end-of-day of start (single day)
+      const endStr = df.end && df.end >= df.start ? df.end : df.start;
+      const e = new Date(endStr); e.setHours(23, 59, 59, 999);
+      return { startDate: s.toISOString(), endDate: e.toISOString() };
     }
     return {};
   }
@@ -1089,7 +1179,7 @@ const AdminOrderList = () => {
     (viewMode !== "grouped_salesman" ? 1 : 0) +
     (sortOrder !== "date_desc" ? 1 : 0) +
     (filterStatus !== "all" ? 1 : 0) +
-    (dateFilter.preset !== "all" ? 1 : 0);
+    (dateFilter.preset !== "today" ? 1 : 0);
 
   /* ── DESKTOP ── */
   if (isDesktop) {
@@ -1206,27 +1296,83 @@ const AdminOrderList = () => {
         />
 
         {/* ── Date Range Filter Row (Desktop) ── */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{
+          display: "flex", gap: 6, marginBottom: 14, alignItems: "center",
+          background: "#f8fafc", borderRadius: 12, padding: "8px 12px",
+          border: "1px solid #f1f5f9", flexWrap: "wrap",
+        }}>
           <span style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.1em", flexShrink: 0 }}>DATE</span>
-          {[{ value: "all", label: "All Time" }, { value: "today", label: "Today" }, { value: "week", label: "This Week" }, { value: "month", label: "This Month" }].map((p) => {
+
+          {/* Quick preset pills */}
+          {[{ value: "today", label: "Today" }, { value: "week", label: "This Week" }, { value: "month", label: "This Month" }, { value: "all", label: "All Time" }].map((p) => {
             const isActive = dateFilter.preset === p.value;
             return (
               <button key={p.value} onClick={() => setDateFilter({ preset: p.value, start: "", end: "" })} style={{
-                padding: "7px 14px", borderRadius: 9, fontSize: 11, fontWeight: 700,
-                border: `1.5px solid ${isActive ? "#818cf8" : "#e2e8f0"}`,
-                background: isActive ? "#eef2ff" : "#fff",
+                padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+                border: `1.5px solid ${isActive ? "#818cf8" : "transparent"}`,
+                background: isActive ? "#eef2ff" : "transparent",
                 color: isActive ? "#4338ca" : "#64748b",
                 cursor: "pointer", transition: "all 0.12s", outline: "none", whiteSpace: "nowrap",
               }}>{p.label}</button>
             );
           })}
-          <div style={{ width: 1, height: 20, background: "#e2e8f0", flexShrink: 0 }} />
-          <input type="date" value={dateFilter.start} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", start: e.target.value }))} style={{ padding: "7px 10px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: 12, color: "#374151", outline: "none", cursor: "pointer" }} />
-          <span style={{ fontSize: 11, color: "#94a3b8" }}>to</span>
-          <input type="date" value={dateFilter.end} onChange={e => setDateFilter(f => ({ ...f, preset: "custom", end: e.target.value }))} style={{ padding: "7px 10px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: 12, color: "#374151", outline: "none", cursor: "pointer" }} />
-          {dateFilter.preset !== "all" && (
-            <span style={{ fontSize: 11, color: "#4338ca", fontWeight: 700, padding: "5px 10px", background: "#eef2ff", borderRadius: 8, border: "1px solid #c7d2fe" }}>
-              {dateFilter.preset === "today" ? "Today" : dateFilter.preset === "week" ? "This Week" : dateFilter.preset === "month" ? "This Month" : `${dateFilter.start || "?"} → ${dateFilter.end || "?"}`}
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 20, background: "#e2e8f0", flexShrink: 0, margin: "0 2px" }} />
+
+          {/* From → To range picker */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 4,
+            background: dateFilter.preset === "custom" ? "#eef2ff" : "#fff",
+            border: `1.5px solid ${dateFilter.preset === "custom" ? "#818cf8" : "#e2e8f0"}`,
+            borderRadius: 8, padding: "4px 8px", transition: "all 0.15s", cursor: "pointer",
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={dateFilter.preset === "custom" ? "#4338ca" : "#94a3b8"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <input
+              type="date"
+              title="From date"
+              value={dateFilter.preset === "custom" ? dateFilter.start : ""}
+              onChange={e => {
+                const nf = { preset: "custom", start: e.target.value, end: dateFilter.preset === "custom" ? dateFilter.end : "" };
+                setDateFilter(nf);
+              }}
+              style={{ border: "none", outline: "none", background: "transparent", fontSize: 11, fontWeight: 600, color: dateFilter.preset === "custom" && dateFilter.start ? "#1e293b" : "#94a3b8", cursor: "pointer", width: 120 }}
+            />
+            <span style={{ fontSize: 11, color: "#cbd5e1", fontWeight: 400, flexShrink: 0 }}>→</span>
+            <input
+              type="date"
+              title="To date (optional — leave blank for single day)"
+              value={dateFilter.preset === "custom" ? dateFilter.end : ""}
+              min={dateFilter.preset === "custom" ? dateFilter.start : ""}
+              onChange={e => {
+                const nf = { preset: "custom", start: dateFilter.preset === "custom" ? dateFilter.start : "", end: e.target.value };
+                setDateFilter(nf);
+              }}
+              style={{ border: "none", outline: "none", background: "transparent", fontSize: 11, fontWeight: 600, color: dateFilter.preset === "custom" && dateFilter.end ? "#1e293b" : "#94a3b8", cursor: "pointer", width: 120 }}
+            />
+            {dateFilter.preset === "custom" && (dateFilter.start || dateFilter.end) && (
+              <button onClick={() => setDateFilter({ preset: "today", start: "", end: "" })} style={{
+                display: "grid", placeItems: "center", width: 16, height: 16, borderRadius: "50%",
+                background: "#c7d2fe", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
+              }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4338ca" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Active label */}
+          {dateFilter.preset !== "today" && dateFilter.preset !== "custom" && (
+            <span style={{ fontSize: 10, color: "#4338ca", fontWeight: 700, padding: "3px 8px", background: "#eef2ff", borderRadius: 6, border: "1px solid #c7d2fe", whiteSpace: "nowrap" }}>
+              {dateFilter.preset === "month" ? "This Month" : dateFilter.preset === "week" ? "This Week" : "All Time"}
+            </span>
+          )}
+          {dateFilter.preset === "custom" && dateFilter.start && (
+            <span style={{ fontSize: 10, color: "#4338ca", fontWeight: 700, padding: "3px 8px", background: "#eef2ff", borderRadius: 6, border: "1px solid #c7d2fe", whiteSpace: "nowrap" }}>
+              {dateFilter.end && dateFilter.end !== dateFilter.start ? `${dateFilter.start} → ${dateFilter.end}` : dateFilter.start}
             </span>
           )}
         </div>
@@ -1448,9 +1594,14 @@ const AdminOrderList = () => {
               </div>
             );
           })()}
-          {dateFilter.preset !== "all" && (
-            <div onClick={() => setDateFilter({ preset: "all", start: "", end: "" })} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: "#eef2ff", color: "#4338ca", fontSize: 11, fontWeight: 700, border: "1px solid #c7d2fe", cursor: "pointer" }}>
-              {dateFilter.preset === "today" ? "Today" : dateFilter.preset === "week" ? "This Week" : dateFilter.preset === "month" ? "This Month" : "Custom Range"}
+          {dateFilter.preset !== "today" && (
+            <div onClick={() => setDateFilter({ preset: "today", start: "", end: "" })} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: "#eef2ff", color: "#4338ca", fontSize: 11, fontWeight: 700, border: "1px solid #c7d2fe", cursor: "pointer" }}>
+              {dateFilter.preset === "month" ? "This Month"
+                : dateFilter.preset === "week" ? "This Week"
+                : dateFilter.preset === "all" ? "All Time"
+                : dateFilter.preset === "custom" && dateFilter.start
+                  ? (dateFilter.end && dateFilter.end !== dateFilter.start ? `${dateFilter.start} → ${dateFilter.end}` : dateFilter.start)
+                  : "Custom Range"}
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
             </div>
           )}
