@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
@@ -936,6 +936,13 @@ const AdminOrderDetail = () => {
             />
           </div>
         </div>
+
+        <DeleteConfirmModal 
+          isOpen={deleteModalOpen} 
+          onConfirm={confirmDelete} 
+          onCancel={() => setDeleteModalOpen(false)} 
+          isDeleting={isDeleting} 
+        />
 
         <ImageViewer
           isOpen={viewerOpen}

@@ -83,7 +83,7 @@ const Navbar = ({ activeTab, onTabChange }) => {
   ];
 
   useEffect(() => {
-    if (!navRef.current) return;
+    if (typeof window === "undefined" || !navRef.current) return;
     gsap.fromTo(navRef.current, { y: -80, opacity: 0 }, {
       y: 0, opacity: 1, duration: 0.7, ease: "power4.out",
       onComplete: () => gsap.set(navRef.current, { clearProps: "transform,y" }),
@@ -91,6 +91,7 @@ const Navbar = ({ activeTab, onTabChange }) => {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const el = tabRefs.current[activeTab];
     if (!el || !indicatorRef.current) return;
     const { offsetLeft, offsetWidth } = el;

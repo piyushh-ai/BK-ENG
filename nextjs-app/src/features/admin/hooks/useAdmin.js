@@ -16,8 +16,8 @@ export const useAdmin = () => {
       return response;
     } catch (error) {
       dispatch(setLoading(false));
-      dispatch(setError(error));
-      dispatch(setUploadStatus(error.message));
+      dispatch(setError(error?.response?.data?.message || error.message || "Upload failed"));
+      dispatch(setUploadStatus("Upload failed"));
     }
   };
 
@@ -26,13 +26,12 @@ export const useAdmin = () => {
       dispatch(setLoading(true));
       const response = await getAllSalesUsers();
       dispatch(setSalesUser(response.users));
-    
       dispatch(setLoading(false));
       dispatch(setError(null));
       return response;
     } catch (error) {
       dispatch(setLoading(false));
-      dispatch(setError(error));
+      dispatch(setError(error?.response?.data?.message || error.message || "Failed to fetch users"));
       dispatch(setSalesUser(null));
     }
   };
@@ -46,7 +45,7 @@ export const useAdmin = () => {
       return response;
     } catch (error) {
       dispatch(setLoading(false));
-      dispatch(setError(error));
+      dispatch(setError(error?.response?.data?.message || error.message || "Failed to update role"));
     }
   };
 
@@ -59,7 +58,7 @@ export const useAdmin = () => {
       return response;
     } catch (error) {
       dispatch(setLoading(false));
-      dispatch(setError(error));
+      dispatch(setError(error?.response?.data?.message || error.message || "Failed to fetch orders"));
     }
   };
 
@@ -73,7 +72,7 @@ export const useAdmin = () => {
       return response;
     } catch (error) {
       dispatch(setLoading(false));
-      dispatch(setError(error));
+      dispatch(setError(error?.response?.data?.message || error.message || "Search failed"));
     }
   };
 
@@ -84,7 +83,7 @@ export const useAdmin = () => {
       const response = await updateOrderStatusAdmin(id, payload);
       return response;
     } catch (error) {
-      dispatch(setError(error));
+      dispatch(setError(error?.response?.data?.message || error.message || "Failed to update order"));
       throw error;
     }
   };
@@ -96,7 +95,7 @@ export const useAdmin = () => {
       const response = await deleteOrderAdmin(id);
       return response;
     } catch (error) {
-      dispatch(setError(error));
+      dispatch(setError(error?.response?.data?.message || error.message || "Failed to delete order"));
       throw error;
     }
   };
@@ -111,4 +110,3 @@ export const useAdmin = () => {
     handleDeleteOrder
   };
 };
-
