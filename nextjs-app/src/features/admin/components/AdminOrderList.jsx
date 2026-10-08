@@ -1,0 +1,1715 @@
+﻿"use client";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAdmin } from "../hooks/useAdmin";
+import { gsap } from "gsap";
+import { exportReportAdmin } from "../services/admin.api";
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Status Config
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const STATUS_CONFIG = {
+  pending: {
+    bg: "#fffbeb",
+    text: "#b45309",
+    dot: "#f59e0b",
+    border: "#fde68a",
+  },
+  completed: {
+    bg: "#f0fdf4",
+    text: "#15803d",
+    dot: "#22c55e",
+    border: "#bbf7d0",
+  },
+  cancelled: {
+    bg: "#fff1f2",
+    text: "#be123c",
+    dot: "#f43f5e",
+    border: "#fecdd3",
+  },
+  partial: {
+    bg: "#eff6ff",
+    text: "#1d4ed8",
+    dot: "#3b82f6",
+    border: "#bfdbfe",
+  },
+};
+const getStatusConfig = (s) =>
+  STATUS_CONFIG[s] || {
+    bg: "#f9fafb",
+    text: "#374151",
+    dot: "#9ca3af",
+    border: "#e5e7eb",
+  };
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Responsive hook
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const useIsDesktop = () => {
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 900 : false,
+  );
+  useEffect(() => {
+    const handler = () => setIsDesktop(window.innerWidth >= 900);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return isDesktop;
+};
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Mobile Filter Drawer
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const MobileFilterDrawer = ({
+  isOpen,
+  onClose,
+  viewMode,
+  setViewMode,
+  sortOrder,
+  setSortOrder,
+  filterStatus,
+  setFilterStatus,
+  dateFilter,
+  setDateFilter,
+  onApplyDate,
+}) => {
+  const drawerRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && drawerRef.current) {
+      gsap.fromTo(
+        drawerRef.current,
+        { y: "100%" },
+        { y: "0%", duration: 0.32, ease: "power3.out" },
+      );
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    if (drawerRef.current) {
+      gsap.to(drawerRef.current, {
+        y: "100%",
+        duration: 0.24,
+        ease: "power3.in",
+        onComplete: onClose,
+      });
+    } else {
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const VIEW_OPTIONS = [
+    { value: "grouped_salesman", label: "By Salesman", icon: "ðŸ‘¤" },
+    { value: "grouped_status", label: "By Status", icon: "ðŸ·ï¸" },
+    { value: "flat", label: "Flat List", icon: "ðŸ“‹" },
+  ];
+  const SORT_OPTIONS = [
+    { value: "date_desc", label: "Newest First", icon: "â†“" },
+    { value: "date_asc", label: "Oldest First", icon: "â†‘" },
+    { value: "party_asc", label: "Party Aâ€“Z", icon: "A" },
+  ];
+  const STATUS_OPTIONS = [
+    "all",
+    "pending",
+    "completed",
+    "partial",
+    "cancelled",
+  ];
+
+  const activeCount =
+    (viewMode !== "grouped_salesman" ? 1 : 0) +
+    (sortOrder !== "date_desc" ? 1 : 0) +
+    (filterStatus !== "all" ? 1 : 0) +
+    (dateFilter.preset !== "today" ? 1 : 0);
+
+  const DATE_PRESETS = [
+    { value: "today", label: "Today" },
+    { value: "week",  label: "This Week" },
+    { value: "month", label: "This Month" },
+    { value: "all",   label: "All Time" },
+  ];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={handleClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(15,23,42,0.45)",
+          zIndex: 998,
+          backdropFilter: "blur(2px)",
+          WebkitBackdropFilter: "blur(2px)",
+        }}
+      />
+
+      {/* Drawer */}
+      <div
+        ref={drawerRef}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 999,
+          background: "var(--color-surface-container-lowest)",
+          borderRadius: "24px 24px 0 0",
+          paddingBottom: 0,
+          boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+          maxHeight: "88vh",
+          display: "flex",
+          flexDirection: "column",
+          transform: "translateY(100%)",
+        }}
+      >
+        {/* Handle bar */}
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 4, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 4, borderRadius: 99, background: "var(--color-outline-variant)" }} />
+        </div>
+
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "12px 20px 14px",
+          borderBottom: "1px solid var(--color-outline-variant)",
+          flexShrink: 0,
+        }}>
+          <div>
+            <div style={{
+              fontSize: 18, fontWeight: 800,
+              color: "var(--color-on-surface)",
+              fontFamily: "'Bricolage Grotesque', sans-serif",
+              letterSpacing: "-0.3px",
+            }}>Filters &amp; View</div>
+            {activeCount > 0 && (
+              <div style={{ fontSize: 11, color: "var(--color-primary)", fontWeight: 600, marginTop: 2 }}>
+                {activeCount} filter{activeCount > 1 ? "s" : ""} active
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {activeCount > 0 && (
+              <button onClick={() => { setViewMode("grouped_salesman"); setSortOrder("date_desc"); setFilterStatus("all"); setDateFilter({ preset: "today", start: "", end: "" }); onApplyDate({ preset: "today", start: "", end: "" }); }}
+                style={{
+                  padding: "6px 14px", borderRadius: 20,
+                  border: "1.5px solid var(--color-outline-variant)",
+                  background: "var(--color-surface-container)",
+                  color: "var(--color-on-surface-variant)",
+                  fontSize: 12, fontWeight: 700, cursor: "pointer", outline: "none",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}>Reset</button>
+            )}
+            <button onClick={handleClose} style={{
+              width: 34, height: 34, borderRadius: 10,
+              border: "1.5px solid var(--color-outline-variant)",
+              background: "var(--color-surface-container)",
+              color: "var(--color-on-surface-variant)",
+              display: "grid", placeItems: "center",
+              cursor: "pointer", outline: "none", flexShrink: 0,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div style={{ overflowY: "auto", flex: 1, padding: "20px 20px 0" }}>
+
+          {/* VIEW AS section */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>View As</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {VIEW_OPTIONS.map((opt) => {
+                const isActive = viewMode === opt.value;
+                return (
+                  <button key={opt.value} onClick={() => setViewMode(opt.value)} style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "12px 14px", borderRadius: 14,
+                    border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                    background: isActive ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "var(--color-surface-container)",
+                    cursor: "pointer", outline: "none", textAlign: "left", transition: "all 0.15s",
+                  }}>
+                    <span style={{ fontSize: 18, lineHeight: 1 }}>{opt.icon}</span>
+                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 700 : 500, color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>{opt.label}</span>
+                    {isActive && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SORT BY section */}
+          <div style={{ marginBottom: 22 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>Sort By</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {SORT_OPTIONS.map((opt) => {
+                const isActive = sortOrder === opt.value;
+                return (
+                  <button key={opt.value} onClick={() => setSortOrder(opt.value)} style={{
+                    flex: 1, padding: "12px 8px", borderRadius: 14,
+                    border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                    background: isActive ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "var(--color-surface-container)",
+                    cursor: "pointer", outline: "none",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                    transition: "all 0.15s",
+                  }}>
+                    <span style={{ fontSize: 16, fontWeight: 900, color: isActive ? "var(--color-primary)" : "var(--color-outline)" }}>{opt.icon}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: isActive ? 700 : 600, color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)", textAlign: "center", lineHeight: 1.3, fontFamily: "'DM Sans', sans-serif" }}>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* STATUS section */}
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>Status</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {STATUS_OPTIONS.map((s) => {
+                const sc = s === "all" ? { bg: "#eef2ff", text: "#4338ca", dot: "#6366f1", border: "#c7d2fe" } : getStatusConfig(s);
+                const isActive = filterStatus === s;
+                return (
+                  <button key={s} onClick={() => setFilterStatus(s)} style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "12px 14px", borderRadius: 14,
+                    border: `1.5px solid ${isActive ? sc.border : "var(--color-outline-variant)"}`,
+                    background: isActive ? sc.bg : "var(--color-surface-container)",
+                    cursor: "pointer", outline: "none", textAlign: "left", transition: "all 0.15s",
+                  }}>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: isActive ? sc.dot : "var(--color-outline-variant)", flexShrink: 0, transition: "background 0.15s" }} />
+                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 700 : 500, color: isActive ? sc.text : "var(--color-on-surface-variant)", textTransform: "capitalize", flex: 1, fontFamily: "'DM Sans', sans-serif" }}>
+                      {s === "all" ? "All Orders" : s}
+                    </span>
+                    {isActive && (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={sc.dot} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* DATE section */}
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, fontFamily: "'DM Sans', sans-serif" }}>Date Range</div>
+
+            {/* Quick preset chips â€” 2x2 grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+              {DATE_PRESETS.map((p) => {
+                const isActive = dateFilter.preset === p.value;
+                return (
+                  <button key={p.value}
+                    onClick={() => { const nf = { preset: p.value, start: "", end: "" }; setDateFilter(nf); onApplyDate(nf); }}
+                    style={{
+                      padding: "11px 8px", borderRadius: 12,
+                      border: `1.5px solid ${isActive ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                      background: isActive ? "color-mix(in srgb, var(--color-primary) 12%, transparent)" : "var(--color-surface-container)",
+                      cursor: "pointer", outline: "none", transition: "all 0.15s",
+                      fontSize: 13, fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)",
+                      fontFamily: "'DM Sans', sans-serif",
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                    <span>{p.label}</span>
+                    {isActive && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom date range card */}
+            <div style={{
+              borderRadius: 14, overflow: "hidden",
+              border: `1.5px solid ${dateFilter.preset === "custom" ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+              background: dateFilter.preset === "custom" ? "color-mix(in srgb, var(--color-primary) 5%, transparent)" : "var(--color-surface-container)",
+              transition: "all 0.15s",
+            }}>
+              <div style={{
+                padding: "10px 14px",
+                fontSize: 10, fontWeight: 800,
+                color: dateFilter.preset === "custom" ? "var(--color-primary)" : "var(--color-outline)",
+                letterSpacing: "0.1em", textTransform: "uppercase",
+                fontFamily: "'DM Sans', sans-serif",
+                borderBottom: `1px solid ${dateFilter.preset === "custom" ? "color-mix(in srgb, var(--color-primary) 20%, transparent)" : "var(--color-outline-variant)"}`,
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Custom Range
+                {dateFilter.preset === "custom" && <span style={{ marginLeft: "auto", fontSize: 10, opacity: 0.7 }}>âœ“ Active</span>}
+              </div>
+
+              <div style={{ padding: "12px 14px", display: "flex", gap: 10 }}>
+                {/* FROM */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>From</div>
+                  <input
+                    type="date"
+                    value={dateFilter.preset === "custom" ? dateFilter.start : ""}
+                    onChange={e => {
+                      const nf = { preset: "custom", start: e.target.value, end: dateFilter.preset === "custom" ? dateFilter.end : "" };
+                      setDateFilter(nf);
+                      if (e.target.value) onApplyDate(nf);
+                    }}
+                    style={{
+                      width: "100%", padding: "9px 10px", borderRadius: 10, boxSizing: "border-box",
+                      border: "1.5px solid var(--color-outline-variant)",
+                      background: "var(--color-surface-container-lowest)",
+                      color: "var(--color-on-surface)", fontSize: 13, outline: "none",
+                    }}
+                  />
+                </div>
+
+                {/* Arrow */}
+                <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 10, color: "var(--color-outline)", fontSize: 16 }}>â†’</div>
+
+                {/* TO */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "var(--color-outline)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>To <span style={{ fontWeight: 400, textTransform: "none", opacity: 0.7 }}>(optional)</span></div>
+                  <input
+                    type="date"
+                    value={dateFilter.preset === "custom" ? dateFilter.end : ""}
+                    min={dateFilter.preset === "custom" ? dateFilter.start : ""}
+                    onChange={e => {
+                      const nf = { preset: "custom", start: dateFilter.preset === "custom" ? dateFilter.start : "", end: e.target.value };
+                      setDateFilter(nf);
+                      onApplyDate(nf);
+                    }}
+                    style={{
+                      width: "100%", padding: "9px 10px", borderRadius: 10, boxSizing: "border-box",
+                      border: "1.5px solid var(--color-outline-variant)",
+                      background: "var(--color-surface-container-lowest)",
+                      color: "var(--color-on-surface)", fontSize: 13, outline: "none",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Summary label */}
+              {dateFilter.preset === "custom" && dateFilter.start && (
+                <div style={{
+                  padding: "8px 14px 10px",
+                  fontSize: 12, fontWeight: 600, color: "var(--color-primary)",
+                  fontFamily: "'DM Sans', sans-serif",
+                  borderTop: "1px solid color-mix(in srgb, var(--color-primary) 15%, transparent)",
+                }}>
+                  {dateFilter.end && dateFilter.end !== dateFilter.start
+                    ? `Showing ${dateFilter.start} â†’ ${dateFilter.end}`
+                    : `Showing only ${dateFilter.start}`}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* âœ… Apply button â€” sticky at bottom, always above the navbar */}
+        <div style={{
+          padding: "16px 20px",
+          paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px) + 68px)",
+          background: "var(--color-surface-container-lowest)",
+          borderTop: "1px solid var(--color-outline-variant)",
+          flexShrink: 0,
+        }}>
+          <button onClick={handleClose} style={{
+            width: "100%", padding: "15px", borderRadius: 16, border: "none",
+            background: "var(--color-primary)",
+            color: "var(--color-on-primary)",
+            fontSize: 15, fontWeight: 800, cursor: "pointer", outline: "none",
+            letterSpacing: "-0.1px",
+            fontFamily: "'Bricolage Grotesque', sans-serif",
+            boxShadow: "0 4px 20px color-mix(in srgb, var(--color-primary) 40%, transparent)",
+            transition: "opacity 0.2s, transform 0.15s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Order Card
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const OrderCard = ({ order, isLatest }) => {
+  const router = useRouter();
+  const sc = getStatusConfig(order.status);
+  const dt = new Date(order.createdAt);
+
+  return (
+    <div
+      id={`order-${order._id}`}
+      onClick={() => router.push(`/admin/order/${order._id}`)}
+      style={{
+        borderRadius: 14,
+        border: `1px solid ${isLatest ? "#c7d2fe" : "#f1f5f9"}`,
+        background: "#ffffff",
+        overflow: "hidden",
+        position: "relative",
+        cursor: "pointer",
+        transition:
+          "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 6px 20px rgba(99,102,241,0.1)";
+        e.currentTarget.style.borderColor = "#c7d2fe";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)";
+        e.currentTarget.style.borderColor = isLatest ? "#c7d2fe" : "#f1f5f9";
+      }}
+    >
+      {/* Left color strip */}
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: sc.dot, borderRadius: "14px 0 0 14px" }} />
+      {isLatest && (
+        <div style={{ position: "absolute", top: 10, right: 12, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 6 }}>NEW</div>
+      )}
+      <div style={{ padding: "12px 14px 12px 18px" }}>
+        {/* Top row: avatar + party name + chevron */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: "#f1f5f9", overflow: "hidden", border: "1px solid #e2e8f0" }}>
+            <img src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(order.partyName || "User")}`} style={{ width: "100%", height: "100%" }} alt="" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {order.partyName}
+            </div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+        {/* Bottom row: status + date + images + salesman */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 46 }}>
+          <div style={{ padding: "3px 9px", fontSize: 10, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", borderRadius: 20, background: sc.bg, color: sc.text, border: `1px solid ${sc.border}`, flexShrink: 0, whiteSpace: "nowrap" }}>
+            {order.status}
+          </div>
+          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, display: "flex", alignItems: "center", gap: 4, overflow: "hidden", flex: 1 }}>
+            <span style={{ whiteSpace: "nowrap" }}>
+              {dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+              {" Â· "}
+              {dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+            </span>
+            {order.images?.length > 0 && (
+              <span style={{ display: "flex", alignItems: "center", gap: 2, color: "#cbd5e1", flexShrink: 0 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                </svg>
+                {order.images.length}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Stats Bar
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const StatsBar = ({ allOrders, isMobile }) => {
+  const counts = useMemo(() => {
+    if (!allOrders) return {};
+    return allOrders.reduce((acc, o) => {
+      acc[o.status] = (acc[o.status] || 0) + 1;
+      return acc;
+    }, {});
+  }, [allOrders]);
+
+  const stats = [
+    {
+      label: "Total",
+      value: allOrders?.length || 0,
+      color: "#4f46e5",
+      bg: "#eef2ff",
+      border: "#c7d2fe",
+    },
+    {
+      label: "Pending",
+      value: counts.pending || 0,
+      ...STATUS_CONFIG.pending,
+      color: STATUS_CONFIG.pending.text,
+    },
+    {
+      label: isMobile ? "Done" : "Completed",
+      value: counts.completed || 0,
+      ...STATUS_CONFIG.completed,
+      color: STATUS_CONFIG.completed.text,
+    },
+    {
+      label: "Partial",
+      value: counts.partial || 0,
+      ...STATUS_CONFIG.partial,
+      color: STATUS_CONFIG.partial.text,
+    },
+    {
+      label: isMobile ? "Cancel" : "Cancelled",
+      value: counts.cancelled || 0,
+      ...STATUS_CONFIG.cancelled,
+      color: STATUS_CONFIG.cancelled.text,
+    },
+  ];
+
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: 6,
+          marginBottom: 14,
+        }}
+      >
+        {stats.map(({ label, value, color, bg, border }) => (
+          <div
+            key={label}
+            style={{
+              background: bg || "#fff",
+              borderRadius: 10,
+              border: `1px solid ${border || "#e2e8f0"}`,
+              padding: "8px 4px",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 900,
+                color,
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                lineHeight: 1,
+                marginBottom: 3,
+              }}
+            >
+              {value}
+            </div>
+            <div
+              style={{
+                fontSize: 8,
+                color,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                opacity: 0.75,
+              }}
+            >
+              {label}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(5, 1fr)",
+        gap: 10,
+        marginBottom: 20,
+      }}
+    >
+      {stats.map(({ label, value, color, bg, border }) => (
+        <div
+          key={label}
+          style={{
+            background: bg || "#fff",
+            borderRadius: 12,
+            border: `1px solid ${border || "#e2e8f0"}`,
+            padding: "12px 14px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              color,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: 6,
+              opacity: 0.75,
+            }}
+          >
+            {label}
+          </div>
+          <div
+            style={{
+              fontSize: 24,
+              fontWeight: 900,
+              color,
+              fontFamily: "'Bricolage Grotesque', sans-serif",
+              lineHeight: 1,
+            }}
+          >
+            {value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Custom Select (desktop only)
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const CustomSelect = ({ value, onChange, options }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  const selectedOption = options.find((o) => o.value === value) || options[0];
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          background: "#fff",
+          border: `1.5px solid ${isOpen ? "#818cf8" : "#e2e8f0"}`,
+          borderRadius: 10,
+          padding: "8px 12px",
+          cursor: "pointer",
+          transition: "border-color 0.15s",
+          boxShadow: isOpen ? "0 0 0 3px rgba(99,102,241,0.1)" : "none",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#1e293b",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {selectedOption.label}
+        </span>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={isOpen ? "#6366f1" : "#94a3b8"}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            transform: isOpen ? "rotate(180deg)" : "none",
+            transition: "transform 0.15s",
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            left: 0,
+            zIndex: 50,
+            background: "#fff",
+            border: "1px solid #e2e8f0",
+            borderRadius: 12,
+            padding: 4,
+            minWidth: "100%",
+            boxShadow:
+              "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            animation: "dropdownIn 0.12s ease forwards",
+          }}
+        >
+          {options.map((o) => (
+            <div
+              key={o.value}
+              onClick={() => {
+                onChange(o.value);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: "8px 12px",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: o.value === value ? 700 : 500,
+                color: o.value === value ? "#4f46e5" : "#475569",
+                background: o.value === value ? "#eef2ff" : "transparent",
+                transition: "background 0.1s",
+                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+              onMouseEnter={(e) => {
+                if (o.value !== value)
+                  e.currentTarget.style.background = "#f8fafc";
+              }}
+              onMouseLeave={(e) => {
+                if (o.value !== value)
+                  e.currentTarget.style.background = "transparent";
+              }}
+            >
+              {o.label}
+              {o.value === value && (
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Search Bar
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const SearchBar = ({ searchQuery, setSearchQuery }) => (
+  <div style={{ position: "relative" }}>
+    <svg
+      style={{
+        position: "absolute",
+        left: 14,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 16,
+        height: 16,
+        color: "#94a3b8",
+        pointerEvents: "none",
+      }}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.5"
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+    </svg>
+    <input
+      type="text"
+      placeholder="Search party nameâ€¦"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      style={{
+        width: "100%",
+        paddingLeft: 42,
+        paddingRight: 14,
+        paddingTop: 11,
+        paddingBottom: 11,
+        borderRadius: 12,
+        border: "1.5px solid #e2e8f0",
+        background: "#fff",
+        color: "#0f172a",
+        fontSize: 14,
+        fontWeight: 500,
+        outline: "none",
+        boxSizing: "border-box",
+        transition: "border-color 0.15s, box-shadow 0.15s",
+      }}
+      onFocus={(e) => {
+        e.target.style.borderColor = "#818cf8";
+        e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.1)";
+      }}
+      onBlur={(e) => {
+        e.target.style.borderColor = "#e2e8f0";
+        e.target.style.boxShadow = "none";
+      }}
+    />
+  </div>
+);
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Desktop Sort/Filter Bar
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const DesktopSortFilterBar = ({ viewMode, setViewMode, sortOrder, setSortOrder }) => (
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 14,
+      padding: "8px 12px",
+      background: "#f8fafc",
+      borderRadius: 12,
+      border: "1px solid #f1f5f9",
+    }}
+  >
+    <span style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.1em", flexShrink: 0 }}>
+      VIEW
+    </span>
+    <CustomSelect
+      value={viewMode}
+      onChange={setViewMode}
+      options={[
+        { value: "grouped_salesman", label: "By Salesman" },
+        { value: "grouped_status", label: "By Status" },
+        { value: "flat", label: "Flat List" },
+      ]}
+    />
+    <div style={{ width: 1, height: 20, background: "#e2e8f0", flexShrink: 0, margin: "0 4px" }} />
+    <span style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.1em", flexShrink: 0 }}>
+      SORT
+    </span>
+    <CustomSelect
+      value={sortOrder}
+      onChange={setSortOrder}
+      options={[
+        { value: "date_desc", label: "Newest First" },
+        { value: "date_asc", label: "Oldest First" },
+        { value: "party_asc", label: "Party Aâ€“Z" },
+      ]}
+    />
+  </div>
+);
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Order Grid
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const OrderGrid = ({ processedOrders, searchQuery, sortOrder, isDesktop, listRef }) => {
+  const isEmpty =
+    processedOrders.type === "flat"
+      ? processedOrders.data.length === 0
+      : Object.keys(processedOrders.data).length === 0;
+
+  if (isEmpty) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 20px", gap: 10 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: "#f1f5f9", display: "grid", placeItems: "center" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </div>
+        <div style={{ fontSize: 14, color: "#64748b", fontWeight: 600 }}>
+          {searchQuery ? "No orders found" : "No orders yet"}
+        </div>
+        <div style={{ fontSize: 12, color: "#94a3b8" }}>
+          {searchQuery ? "Try searching something else" : "Orders will appear here"}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={listRef} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {processedOrders.type === "flat" ? (
+        <div
+          style={{
+            display: isDesktop ? "grid" : "flex",
+            gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined,
+            flexDirection: isDesktop ? undefined : "column",
+            gap: 10,
+          }}
+        >
+          {processedOrders.data.map((order, index) => (
+            <OrderCard
+              key={order._id}
+              order={order}
+              isLatest={index === 0 && !searchQuery && sortOrder === "date_desc"}
+            />
+          ))}
+        </div>
+      ) : (
+        Object.entries(processedOrders.data).map(([groupName, orders]) => {
+          const sc = getStatusConfig(groupName);
+          const isStatusGroup = Object.keys(STATUS_CONFIG).includes(groupName);
+          return (
+            <div
+              key={groupName}
+              style={{ background: "#ffffff", borderRadius: 16, overflow: "hidden", border: "1px solid #f1f5f9", boxShadow: "0 1px 4px rgba(0,0,0,0.03)" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "#fafbfc", borderBottom: "1px solid #f1f5f9" }}>
+                {isStatusGroup ? (
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: sc.bg, display: "grid", placeItems: "center", flexShrink: 0, border: `1px solid ${sc.border}` }}>
+                    <div style={{ width: 12, height: 12, borderRadius: "50%", background: sc.dot }} />
+                  </div>
+                ) : (
+                  <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, overflow: "hidden", border: "1.5px solid #e0e7ff" }}>
+                    <img src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(groupName || "User")}`} style={{ width: "100%", height: "100%" }} alt="" />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textTransform: isStatusGroup ? "capitalize" : "none" }}>
+                    {groupName}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, marginTop: 1 }}>
+                    {orders.length} {orders.length === 1 ? "order" : "orders"}
+                  </div>
+                </div>
+                {!isStatusGroup && (() => {
+                  const statuses = orders.reduce((a, o) => { a[o.status] = (a[o.status] || 0) + 1; return a; }, {});
+                  return (
+                    <div style={{ display: "flex", gap: 4, flexWrap: "nowrap", justifyContent: "flex-end", flexShrink: 0 }}>
+                      {Object.entries(statuses).map(([s, c]) => {
+                        const st = getStatusConfig(s);
+                        return (
+                          <div key={s} title={`${s}: ${c}`} style={{ display: "flex", alignItems: "center", gap: 3, padding: isDesktop ? "2px 8px" : "2px 6px", borderRadius: 20, background: st.bg, color: st.text, fontSize: isDesktop ? 10 : 9, fontWeight: 700, border: `1px solid ${st.border}`, whiteSpace: "nowrap" }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: st.dot, flexShrink: 0 }} />
+                            {c}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+              <div style={{ padding: 12, display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 10 }}>
+                {orders.map((order, index) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    isLatest={index === 0 && !searchQuery && sortOrder === "date_desc"}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+};
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Main Component
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const AdminOrderList = () => {
+  const allOrders = useSelector((s) => s.admin.allOrders);
+  const loading = useSelector((s) => s.admin.loading);
+  const { handleSearchOrders, handleGetAllOrders } = useAdmin();
+  const isDesktop = useIsDesktop();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [viewMode, setViewMode] = useState("grouped_salesman");
+  const [sortOrder, setSortOrder] = useState("date_desc");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "error" });
+  const [dateFilter, setDateFilter] = useState({ preset: "today", start: "", end: "" });
+
+  const showToast = (message, type = "error") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast({ message: "", type: "error" });
+    }, 3000);
+  };
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await exportReportAdmin();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "orders_report.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showToast("Report exported successfully!", "success");
+    } catch (error) {
+      console.error("Export failed", error);
+      showToast("Failed to export report. Please try again.", "error");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+
+  const searchParams = useSearchParams();
+  const highlightOrderId = searchParams.get("orderId");
+  const listRef = useRef(null);
+
+  // â”€â”€ Build date range params from preset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  function buildDateRange(df) {
+    if (!df || df.preset === "all") return {};
+    const now = new Date();
+    if (df.preset === "today") {
+      const s = new Date(now); s.setHours(0,0,0,0);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "week") {
+      const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0,0,0,0);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "month") {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { startDate: s.toISOString(), endDate: now.toISOString() };
+    }
+    if (df.preset === "custom") {
+      if (!df.start) return {};
+      // Start: beginning of selected start date
+      const s = new Date(df.start); s.setHours(0, 0, 0, 0);
+      // End: if end date provided use end-of-day of that date, else end-of-day of start (single day)
+      const endStr = df.end && df.end >= df.start ? df.end : df.start;
+      const e = new Date(endStr); e.setHours(23, 59, 59, 999);
+      return { startDate: s.toISOString(), endDate: e.toISOString() };
+    }
+    return {};
+  }
+
+  useEffect(() => {
+    const h = setTimeout(() => {
+      if (!searchQuery) handleGetAllOrders(1, 500, buildDateRange(dateFilter));
+      else handleSearchOrders(searchQuery);
+    }, 450);
+    return () => clearTimeout(h);
+  }, [searchQuery, dateFilter]);
+
+  useEffect(() => {
+    const styleId = "aol-styles";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.innerHTML = `
+        @keyframes dropdownIn { from { opacity:0; transform:translateY(-6px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+        ::-webkit-scrollbar { display:none; }
+      `;
+      document.head.appendChild(style);
+    }
+    if (allOrders?.length > 0 && listRef.current) {
+      gsap.fromTo(
+        listRef.current.children,
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, stagger: 0.035, duration: 0.3, ease: "power2.out" },
+      );
+      if (highlightOrderId) {
+        setTimeout(() => {
+          const el = document.getElementById(`order-${highlightOrderId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            gsap.fromTo(
+              el,
+              { boxShadow: "0 0 0 3px #6366f1" },
+              {
+                boxShadow: "0 0 0 0px #6366f1",
+                duration: 2,
+                ease: "power2.out",
+                delay: 0.3,
+              },
+            );
+          }
+        }, 600);
+      }
+    }
+  }, [allOrders, highlightOrderId, viewMode, sortOrder]);
+
+  const processedOrders = useMemo(() => {
+    if (!allOrders) return { type: "flat", data: [] };
+    let filtered =
+      filterStatus === "all"
+        ? allOrders
+        : allOrders.filter((o) => o.status === filterStatus);
+    filtered = [...filtered].sort((a, b) => {
+      if (sortOrder === "date_desc")
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      if (sortOrder === "date_asc")
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      if (sortOrder === "party_asc")
+        return a.partyName.localeCompare(b.partyName);
+      return 0;
+    });
+    if (viewMode === "grouped_salesman") {
+      const groups = filtered.reduce((acc, order) => {
+        const name = order.user?.name || "Unknown Salesman";
+        if (!acc[name]) acc[name] = [];
+        acc[name].push(order);
+        return acc;
+      }, {});
+      return { type: "grouped", data: groups };
+    }
+    if (viewMode === "grouped_status") {
+      const groups = filtered.reduce((acc, order) => {
+        const status = order.status || "unknown";
+        if (!acc[status]) acc[status] = [];
+        acc[status].push(order);
+        return acc;
+      }, {});
+      return { type: "grouped", data: groups };
+    }
+    return { type: "flat", data: filtered };
+  }, [allOrders, filterStatus, sortOrder, viewMode]);
+
+  const activeFilterCount =
+    (viewMode !== "grouped_salesman" ? 1 : 0) +
+    (sortOrder !== "date_desc" ? 1 : 0) +
+    (filterStatus !== "all" ? 1 : 0) +
+    (dateFilter.preset !== "today" ? 1 : 0);
+
+  /* â”€â”€ DESKTOP â”€â”€ */
+  if (isDesktop) {
+    const STATUS_FILTERS = [
+      "all",
+      "pending",
+      "completed",
+      "partial",
+      "cancelled",
+    ];
+    return (
+      <div style={{ width: "100%", padding: "0 0 48px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Orders</h2>
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            style={{
+              padding: "8px 16px",
+              background: "#10b981",
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: isExporting ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              opacity: isExporting ? 0.7 : 1,
+              boxShadow: "0 2px 6px rgba(16,185,129,0.2)"
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            {isExporting ? "Exporting..." : "Export Report"}
+          </button>
+        </div>
+
+        {!loading && allOrders?.length > 0 && (
+          <StatsBar allOrders={allOrders} isMobile={false} />
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            marginBottom: 14,
+            alignItems: "center",
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          </div>
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            {STATUS_FILTERS.map((s) => {
+              const sc =
+                s === "all"
+                  ? {
+                      bg: "#eef2ff",
+                      text: "#4338ca",
+                      dot: "#6366f1",
+                      border: "#c7d2fe",
+                    }
+                  : getStatusConfig(s);
+              const isActive = filterStatus === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "capitalize",
+                    border: `1.5px solid ${isActive ? sc.border : "#e2e8f0"}`,
+                    background: isActive ? sc.bg : "#fff",
+                    color: isActive ? sc.text : "#64748b",
+                    cursor: "pointer",
+                    transition: "all 0.12s",
+                    whiteSpace: "nowrap",
+                    outline: "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = "#c7d2fe";
+                      e.currentTarget.style.color = "#4f46e5";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = "#e2e8f0";
+                      e.currentTarget.style.color = "#64748b";
+                    }
+                  }}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <DesktopSortFilterBar
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+        />
+
+        {/* â”€â”€ Date Range Filter Row (Desktop) â”€â”€ */}
+        <div style={{
+          display: "flex", gap: 6, marginBottom: 14, alignItems: "center",
+          background: "#f8fafc", borderRadius: 12, padding: "8px 12px",
+          border: "1px solid #f1f5f9", flexWrap: "wrap",
+        }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: "#94a3b8", letterSpacing: "0.1em", flexShrink: 0 }}>DATE</span>
+
+          {/* Quick preset pills */}
+          {[{ value: "today", label: "Today" }, { value: "week", label: "This Week" }, { value: "month", label: "This Month" }, { value: "all", label: "All Time" }].map((p) => {
+            const isActive = dateFilter.preset === p.value;
+            return (
+              <button key={p.value} onClick={() => setDateFilter({ preset: p.value, start: "", end: "" })} style={{
+                padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+                border: `1.5px solid ${isActive ? "#818cf8" : "transparent"}`,
+                background: isActive ? "#eef2ff" : "transparent",
+                color: isActive ? "#4338ca" : "#64748b",
+                cursor: "pointer", transition: "all 0.12s", outline: "none", whiteSpace: "nowrap",
+              }}>{p.label}</button>
+            );
+          })}
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 20, background: "#e2e8f0", flexShrink: 0, margin: "0 2px" }} />
+
+          {/* From â†’ To range picker */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 4,
+            background: dateFilter.preset === "custom" ? "#eef2ff" : "#fff",
+            border: `1.5px solid ${dateFilter.preset === "custom" ? "#818cf8" : "#e2e8f0"}`,
+            borderRadius: 8, padding: "4px 8px", transition: "all 0.15s", cursor: "pointer",
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={dateFilter.preset === "custom" ? "#4338ca" : "#94a3b8"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <input
+              type="date"
+              title="From date"
+              value={dateFilter.preset === "custom" ? dateFilter.start : ""}
+              onChange={e => {
+                const nf = { preset: "custom", start: e.target.value, end: dateFilter.preset === "custom" ? dateFilter.end : "" };
+                setDateFilter(nf);
+              }}
+              style={{ border: "none", outline: "none", background: "transparent", fontSize: 11, fontWeight: 600, color: dateFilter.preset === "custom" && dateFilter.start ? "#1e293b" : "#94a3b8", cursor: "pointer", width: 120 }}
+            />
+            <span style={{ fontSize: 11, color: "#cbd5e1", fontWeight: 400, flexShrink: 0 }}>â†’</span>
+            <input
+              type="date"
+              title="To date (optional â€” leave blank for single day)"
+              value={dateFilter.preset === "custom" ? dateFilter.end : ""}
+              min={dateFilter.preset === "custom" ? dateFilter.start : ""}
+              onChange={e => {
+                const nf = { preset: "custom", start: dateFilter.preset === "custom" ? dateFilter.start : "", end: e.target.value };
+                setDateFilter(nf);
+              }}
+              style={{ border: "none", outline: "none", background: "transparent", fontSize: 11, fontWeight: 600, color: dateFilter.preset === "custom" && dateFilter.end ? "#1e293b" : "#94a3b8", cursor: "pointer", width: 120 }}
+            />
+            {dateFilter.preset === "custom" && (dateFilter.start || dateFilter.end) && (
+              <button onClick={() => setDateFilter({ preset: "today", start: "", end: "" })} style={{
+                display: "grid", placeItems: "center", width: 16, height: 16, borderRadius: "50%",
+                background: "#c7d2fe", border: "none", cursor: "pointer", padding: 0, flexShrink: 0,
+              }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4338ca" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Active label */}
+          {dateFilter.preset !== "today" && dateFilter.preset !== "custom" && (
+            <span style={{ fontSize: 10, color: "#4338ca", fontWeight: 700, padding: "3px 8px", background: "#eef2ff", borderRadius: 6, border: "1px solid #c7d2fe", whiteSpace: "nowrap" }}>
+              {dateFilter.preset === "month" ? "This Month" : dateFilter.preset === "week" ? "This Week" : "All Time"}
+            </span>
+          )}
+          {dateFilter.preset === "custom" && dateFilter.start && (
+            <span style={{ fontSize: 10, color: "#4338ca", fontWeight: 700, padding: "3px 8px", background: "#eef2ff", borderRadius: 6, border: "1px solid #c7d2fe", whiteSpace: "nowrap" }}>
+              {dateFilter.end && dateFilter.end !== dateFilter.start ? `${dateFilter.start} â†’ ${dateFilter.end}` : dateFilter.start}
+            </span>
+          )}
+        </div>
+
+        {loading && (!allOrders || allOrders.length === 0) ? (
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                gap: 6,
+                alignItems: "center",
+                color: "#94a3b8",
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ animation: "spin 1s linear infinite" }}
+              >
+                <path
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  strokeOpacity="0.3"
+                />
+                <path d="M21 12a9 9 0 00-9-9" />
+              </svg>
+              Loading ordersâ€¦
+            </div>
+          </div>
+        ) : (
+          <OrderGrid
+            processedOrders={processedOrders}
+            searchQuery={searchQuery}
+            sortOrder={sortOrder}
+            isDesktop={isDesktop}
+            listRef={listRef}
+          />
+        )}
+
+        {/* Desktop Toast Notification */}
+        {toast.message && (
+          <div style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: toast.type === "success" ? "#10b981" : "#be123c",
+            color: "#fff",
+            padding: "12px 24px",
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 600,
+            boxShadow: toast.type === "success" ? "0 4px 12px rgba(16,185,129,0.3)" : "0 4px 12px rgba(225,29,72,0.3)",
+            zIndex: 9999,
+            animation: "dropdownIn 0.2s ease forwards",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            {toast.type === "success" ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            )}
+            {toast.message}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* â”€â”€ MOBILE â”€â”€ */
+  return (
+    <div style={{ width: "100%", padding: "0 0 40px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0f172a", fontFamily: "'Bricolage Grotesque', sans-serif" }}>Orders</h2>
+        <button
+          onClick={handleExport}
+          disabled={isExporting}
+          style={{
+            width: 38,
+            height: 38,
+            background: "#10b981",
+            color: "#fff",
+            border: "none",
+            borderRadius: 10,
+            cursor: isExporting ? "not-allowed" : "pointer",
+            display: "grid",
+            placeItems: "center",
+            opacity: isExporting ? 0.7 : 1,
+            boxShadow: "0 2px 6px rgba(16,185,129,0.2)",
+            flexShrink: 0,
+          }}
+          title={isExporting ? "Exporting..." : "Export Report"}
+        >
+          {isExporting ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 1s linear infinite" }}>
+              <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity="0.3" />
+              <path d="M21 12a9 9 0 00-9-9" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Stats */}
+      {!loading && allOrders?.length > 0 && (
+        <StatsBar allOrders={allOrders} isMobile={true} />
+      )}
+
+      {/* Search + Filter button */}
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          marginBottom: 14,
+          alignItems: "center",
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        </div>
+        <button
+          onClick={() => setFilterDrawerOpen(true)}
+          style={{
+            position: "relative",
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            border:
+              activeFilterCount > 0
+                ? "1.5px solid #c7d2fe"
+                : "1.5px solid #e2e8f0",
+            background: activeFilterCount > 0 ? "#eef2ff" : "#fff",
+            color: activeFilterCount > 0 ? "#6366f1" : "#64748b",
+            display: "grid",
+            placeItems: "center",
+            cursor: "pointer",
+            outline: "none",
+            flexShrink: 0,
+            transition: "all 0.15s",
+            boxShadow:
+              activeFilterCount > 0 ? "0 0 0 3px rgba(99,102,241,0.1)" : "none",
+          }}
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+            <line
+              x1="12"
+              y1="18"
+              x2="12"
+              y2="18"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+          {activeFilterCount > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                top: -5,
+                right: -5,
+                width: 17,
+                height: 17,
+                borderRadius: "50%",
+                background: "#6366f1",
+                color: "#fff",
+                fontSize: 9,
+                fontWeight: 900,
+                display: "grid",
+                placeItems: "center",
+                border: "2px solid #fff",
+              }}
+            >
+              {activeFilterCount}
+            </div>
+          )}
+        </button>
+      </div>
+
+      {/* Active filter chips â€” visible at a glance */}
+      {activeFilterCount > 0 && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+          {filterStatus !== "all" && (() => {
+            const sc = getStatusConfig(filterStatus);
+            return (
+              <div onClick={() => setFilterStatus("all")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: sc.bg, color: sc.text, fontSize: 11, fontWeight: 700, border: `1px solid ${sc.border}`, cursor: "pointer", textTransform: "capitalize" }}>
+                {filterStatus}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </div>
+            );
+          })()}
+          {dateFilter.preset !== "today" && (
+            <div onClick={() => setDateFilter({ preset: "today", start: "", end: "" })} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: "#eef2ff", color: "#4338ca", fontSize: 11, fontWeight: 700, border: "1px solid #c7d2fe", cursor: "pointer" }}>
+              {dateFilter.preset === "month" ? "This Month"
+                : dateFilter.preset === "week" ? "This Week"
+                : dateFilter.preset === "all" ? "All Time"
+                : dateFilter.preset === "custom" && dateFilter.start
+                  ? (dateFilter.end && dateFilter.end !== dateFilter.start ? `${dateFilter.start} â†’ ${dateFilter.end}` : dateFilter.start)
+                  : "Custom Range"}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </div>
+          )}
+          {viewMode !== "grouped_salesman" && (
+            <div onClick={() => setViewMode("grouped_salesman")} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20, background: "#f8fafc", color: "#64748b", fontSize: 11, fontWeight: 700, border: "1px solid #e2e8f0", cursor: "pointer" }}>
+              {viewMode === "flat" ? "Flat List" : "By Status"}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </div>
+          )}
+        </div>
+      )}
+
+      {loading && (!allOrders || allOrders.length === 0) ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "60px 20px",
+            color: "#94a3b8",
+            fontWeight: 600,
+            fontSize: 13,
+          }}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ animation: "spin 1s linear infinite" }}
+          >
+            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity="0.3" />
+            <path d="M21 12a9 9 0 00-9-9" />
+          </svg>
+          Loading ordersâ€¦
+        </div>
+      ) : (
+        <OrderGrid
+          processedOrders={processedOrders}
+          searchQuery={searchQuery}
+          sortOrder={sortOrder}
+          isDesktop={isDesktop}
+          listRef={listRef}
+        />
+      )}
+
+      {/* Filter Drawer */}
+      <MobileFilterDrawer
+        isOpen={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        onApplyDate={(nf) => setDateFilter(nf)}
+      />
+
+      {/* Mobile Toast Notification */}
+      {toast.message && (
+        <div style={{
+          position: "fixed",
+          bottom: 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: toast.type === "success" ? "#10b981" : "#be123c",
+          color: "#fff",
+          padding: "10px 16px",
+          borderRadius: 12,
+          fontSize: 13,
+          fontWeight: 600,
+          boxShadow: toast.type === "success" ? "0 4px 12px rgba(16,185,129,0.3)" : "0 4px 12px rgba(225,29,72,0.3)",
+          zIndex: 9999,
+          animation: "dropdownIn 0.2s ease forwards",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          width: "max-content",
+          maxWidth: "90vw",
+          textAlign: "left",
+          lineHeight: 1.4,
+        }}>
+          {toast.type === "success" ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminOrderList;
